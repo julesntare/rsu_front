@@ -9,7 +9,7 @@ export const MODIFY_OFFICE = "MODIFY_OFFICE";
 export const DELETE_ALL_OFFICE = "DELETE_ALL_OFFICE";
 
 export const getOffice = () => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/offices/all`)
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/offices/all`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
@@ -20,7 +20,7 @@ export const getOffice = () => (dispatch) => {
 };
 
 export const getOfficeByID = (id) => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/offices/${id}`)
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/offices/${id}`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
@@ -32,7 +32,7 @@ export const getOfficeByID = (id) => (dispatch) => {
 
 export const getOfficesByBuildingID = (id) => (dispatch) => {
   // filter via redux fetched offices by building id
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/offices/all`)
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/offices/all`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
@@ -63,7 +63,7 @@ export const deleteAllOffice = () => (dispatch) => {
 };
 
 export const createOffice = (data) => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/offices`, {
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/offices`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("rsuToken")}`,

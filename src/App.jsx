@@ -13,7 +13,7 @@ import Scrollbar from "smooth-scrollbar";
 import Maps from "./Components/Maps/Maps";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faAngleUp } from "@fortawesome/free-solid-svg-icons";
-import { AuthProvider } from "./contexts/JWTAuthContext";
+import { AuthProvider } from "./contexts/JWTAuthContext.jsx";
 import Bookings from "./Components/Bookings/Bookings";
 import BookingsForm from "./Components/BookingModal/BookingsForm";
 

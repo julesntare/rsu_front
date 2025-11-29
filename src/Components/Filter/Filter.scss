@@ -1,5 +1,5 @@
-@import "../../../public/scss/bg";
-@import "../../../public/scss/borders";
+@use "../../../public/scss/bg" as *;
+@use "../../../public/scss/borders" as *;
 
 .sticky {
   position: fixed;

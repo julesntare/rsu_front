@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const login = async (email, password) => {
-    await fetch(`${process.env.REACT_APP_RSU_API_URL}/auth/login`, {
+    await fetch(`${import.meta.env.VITE_RSU_API_URL}/auth/login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }) => {
       if (accessToken && isValidToken(accessToken)) {
         setSession(accessToken);
         const { user } = jwtDecode(accessToken);
-        fetch(`${process.env.REACT_APP_RSU_API_URL}/users/${user}`, {
+        fetch(`${import.meta.env.VITE_RSU_API_URL}/users/${user}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

@@ -9,7 +9,7 @@ export const MODIFY_ROOM = "MODIFY_ROOM";
 export const DELETE_ALL_ROOM = "DELETE_ALL_ROOM";
 
 export const getRoom = () => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/rooms/all`)
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/rooms/all`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
@@ -20,7 +20,7 @@ export const getRoom = () => (dispatch) => {
 };
 
 export const getBuildingByID = (id) => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/rooms/${id}`)
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/rooms/${id}`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
@@ -32,7 +32,7 @@ export const getBuildingByID = (id) => (dispatch) => {
 
 export const getRoomsByBuildingID = (id) => (dispatch) => {
   // filter via redux fetched rooms by building id
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/rooms/all`)
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/rooms/all`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
@@ -61,7 +61,7 @@ export const deleteAllRoom = () => (dispatch) => {
 };
 
 export const createRoom = (data) => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/rooms/create`, {
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/rooms/create`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("rsuToken")}`,

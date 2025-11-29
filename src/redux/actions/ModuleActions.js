@@ -8,7 +8,7 @@ export const MODIFY_MODULE = "MODIFY_MODULE";
 export const DELETE_ALL_MODULE = "DELETE_ALL_MODULE";
 
 export const getModule = () => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/modules`)
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/modules`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
@@ -37,7 +37,7 @@ export const deleteAllModule = () => (dispatch) => {
 };
 
 export const createModule = (data) => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/modules/create`, {
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/modules/create`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("rsuToken")}`,

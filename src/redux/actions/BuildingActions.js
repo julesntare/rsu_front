@@ -8,7 +8,7 @@ export const MODIFY_BUILDING = "MODIFY_BUILDING";
 export const DELETE_ALL_BUILDING = "DELETE_ALL_BUILDING";
 
 export const getBuilding = () => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/building/all`)
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/building/all`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
@@ -19,7 +19,7 @@ export const getBuilding = () => (dispatch) => {
 };
 
 export const getBuildingByID = (id) => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/building/${id}`)
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/building/${id}`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
@@ -48,7 +48,7 @@ export const deleteAllBuilding = () => (dispatch) => {
 };
 
 export const createBuilding = (data) => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/building`, {
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/building`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("rsuToken")}`,

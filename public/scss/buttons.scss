@@ -1,5 +1,5 @@
-@import "./bg";
-@import "./borders";
+@use "./bg" as *;
+@use "./borders" as *;
 
 .btn-p{
     background: linear-gradient(45deg, $bg-hover-primary rgb(71, 137, 175), rgb(142, 4, 255) ) repeat-y;

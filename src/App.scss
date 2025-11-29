@@ -1,4 +1,4 @@
-@import "../public/scss/bg";
+@use "../public/scss/bg" as *;
 
 .app {
   position: relative;

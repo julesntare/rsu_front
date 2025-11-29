@@ -7,7 +7,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getBuilding } from "../../redux/actions/BuildingActions";
 import { useParams } from "react-router-dom";
 
-mapboxgl.accessToken = process.env.REACT_APP_MAPBOX_API_KEY;
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_API_KEY;
 
 export default function Maps() {
   const param = useParams();

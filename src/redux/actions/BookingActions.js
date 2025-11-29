@@ -8,7 +8,7 @@ export const MODIFY_BOOKING = "MODIFY_BOOKING";
 export const DELETE_ALL_BOOKING = "DELETE_ALL_BOOKING";
 
 export const getBooking = () => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/bookings/all`)
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/bookings/all`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
@@ -37,7 +37,7 @@ export const deleteAllBooking = () => (dispatch) => {
 };
 
 export const createBooking = (data) => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/bookings/create`, {
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/bookings/create`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("rsuToken")}`,

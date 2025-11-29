@@ -8,7 +8,7 @@ export const MODIFY_USER = "MODIFY_USER";
 export const DELETE_ALL_USER = "DELETE_ALL_USER";
 
 export const getUser = () => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/users/all`, {
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/users/all`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("rsuToken")}`,
@@ -25,7 +25,7 @@ export const getUser = () => (dispatch) => {
 };
 
 export const getUserByID = (id) => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/users/${id}`, {
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/users/${id}`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("rsuToken")}`,
@@ -60,7 +60,7 @@ export const deleteAllUser = () => (dispatch) => {
 };
 
 export const createUser = (data) => (dispatch) => {
-  fetch(`${process.env.REACT_APP_RSU_API_URL}/auth/register`, {
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/auth/register`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${localStorage.getItem("rsuToken")}`,
