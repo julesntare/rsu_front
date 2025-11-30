@@ -19,6 +19,9 @@ const AllRooms = (props) => {
   const [currOffices, setCurrOffices] = useState([]);
   const [filteredRooms, setFilteredRooms] = useState([]);
   const [filteredOffices, setFilteredOffices] = useState([]);
+  const [currentRoomPage, setCurrentRoomPage] = useState(1);
+  const [currentOfficePage, setCurrentOfficePage] = useState(1);
+  const itemsPerPage = 12; // Show 12 items per page
   const rooms = useSelector((state) => state.rooms.rooms);
   const offices = useSelector((state) => state.offices.offices);
   const bookings = useSelector((state) => state.bookings.bookings);
@@ -89,6 +92,7 @@ const AllRooms = (props) => {
         room.capacity.toString().includes(search)
     );
     setFilteredRooms(filteredRooms);
+    setCurrentRoomPage(1); // Reset to first page on search
   };
 
   const searchOffices = (e) => {
@@ -102,13 +106,66 @@ const AllRooms = (props) => {
         office.capacity.toString().includes(search)
     );
     setFilteredOffices(filteredOffices);
+    setCurrentOfficePage(1); // Reset to first page on search
+  };
+
+  // Pagination logic
+  const indexOfLastRoom = currentRoomPage * itemsPerPage;
+  const indexOfFirstRoom = indexOfLastRoom - itemsPerPage;
+  const currentRooms = filteredRooms.slice(indexOfFirstRoom, indexOfLastRoom);
+  const totalRoomPages = Math.ceil(filteredRooms.length / itemsPerPage);
+
+  const indexOfLastOffice = currentOfficePage * itemsPerPage;
+  const indexOfFirstOffice = indexOfLastOffice - itemsPerPage;
+  const currentOffices = filteredOffices.slice(indexOfFirstOffice, indexOfLastOffice);
+  const totalOfficePages = Math.ceil(filteredOffices.length / itemsPerPage);
+
+  const paginateRooms = (pageNumber) => {
+    setCurrentRoomPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const paginateOffices = (pageNumber) => {
+    setCurrentOfficePage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = (currentPage, totalPages) => {
+    const pages = [];
+    const maxVisible = 5;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    return pages;
   };
 
   const roomsRender =
     currRooms.length === 0 ? (
       <div className="text-center">No rooms available at the moment</div>
     ) : (
-      filteredRooms.map((room, i) => (
+      currentRooms.map((room, i) => (
         <div
           className="card text-sm col-12 col-sm-4 col-lg-3 col-xxl-3 shadow-sm room-card"
           key={i}
@@ -180,7 +237,7 @@ const AllRooms = (props) => {
     currOffices.length === 0 ? (
       <div className="text-center">No offices available at the moment</div>
     ) : (
-      filteredOffices.map((office, i) => (
+      currentOffices.map((office, i) => (
         <div
           className="card text-sm col-12 col-sm-4 col-lg-3 col-xxl-3 shadow-sm room-card"
           key={i}
@@ -284,9 +341,45 @@ const AllRooms = (props) => {
               }}
             />
           </div>
+          <div className="pagination-info">
+            <p>Showing {indexOfFirstRoom + 1} - {Math.min(indexOfLastRoom, filteredRooms.length)} of {filteredRooms.length} rooms</p>
+          </div>
           <div className="d-flex row h-100" id="rooms-box">
             {roomsRender}
           </div>
+          {totalRoomPages > 1 && (
+            <div className="pagination-container">
+              <button
+                onClick={() => paginateRooms(currentRoomPage - 1)}
+                disabled={currentRoomPage === 1}
+                className="pagination-btn pagination-prev"
+              >
+                <i className="bi bi-chevron-left"></i> Previous
+              </button>
+              <div className="pagination-numbers">
+                {getPageNumbers(currentRoomPage, totalRoomPages).map((page, index) => (
+                  page === '...' ? (
+                    <span key={index} className="pagination-ellipsis">...</span>
+                  ) : (
+                    <button
+                      key={index}
+                      onClick={() => paginateRooms(page)}
+                      className={`pagination-number ${currentRoomPage === page ? 'active' : ''}`}
+                    >
+                      {page}
+                    </button>
+                  )
+                ))}
+              </div>
+              <button
+                onClick={() => paginateRooms(currentRoomPage + 1)}
+                disabled={currentRoomPage === totalRoomPages}
+                className="pagination-btn pagination-next"
+              >
+                Next <i className="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          )}
         </TabPanel>
         <TabPanel>
           <div className="search-container">
@@ -306,9 +399,45 @@ const AllRooms = (props) => {
               }}
             />
           </div>
+          <div className="pagination-info">
+            <p>Showing {indexOfFirstOffice + 1} - {Math.min(indexOfLastOffice, filteredOffices.length)} of {filteredOffices.length} offices</p>
+          </div>
           <div className="d-flex row h-100" id="rooms-box">
             {officesRender}
           </div>
+          {totalOfficePages > 1 && (
+            <div className="pagination-container">
+              <button
+                onClick={() => paginateOffices(currentOfficePage - 1)}
+                disabled={currentOfficePage === 1}
+                className="pagination-btn pagination-prev"
+              >
+                <i className="bi bi-chevron-left"></i> Previous
+              </button>
+              <div className="pagination-numbers">
+                {getPageNumbers(currentOfficePage, totalOfficePages).map((page, index) => (
+                  page === '...' ? (
+                    <span key={index} className="pagination-ellipsis">...</span>
+                  ) : (
+                    <button
+                      key={index}
+                      onClick={() => paginateOffices(page)}
+                      className={`pagination-number ${currentOfficePage === page ? 'active' : ''}`}
+                    >
+                      {page}
+                    </button>
+                  )
+                ))}
+              </div>
+              <button
+                onClick={() => paginateOffices(currentOfficePage + 1)}
+                disabled={currentOfficePage === totalOfficePages}
+                className="pagination-btn pagination-next"
+              >
+                Next <i className="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          )}
         </TabPanel>
       </Tabs>
     </div>
