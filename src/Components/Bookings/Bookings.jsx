@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./bookings.scss";
 import "../BookingModal/BookingModalDetails.scss";
 import { Modal } from "react-bootstrap";
@@ -6,17 +6,16 @@ import BookingModalDetails from "../BookingModal/BookingModalDetails";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getRoom } from "../../redux/actions/RoomActions";
-import { CircularProgress } from "@mui/material";
 import { getBooking } from "../../redux/actions/BookingActions";
-import BookingsForm from "../BookingModal/BookingsForm";
 import useAuth from "../../hooks/useAuth";
-import { Calendar, momentLocalizer } from "react-big-calendar";
-import "react-big-calendar/lib/css/react-big-calendar.css";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import listPlugin from "@fullcalendar/list";
+import interactionPlugin from "@fullcalendar/interaction";
 import moment from "moment";
 import { getUser } from "../../redux/actions/UserActions";
 import { getModule } from "../../redux/actions/ModuleActions";
-
-const localizer = momentLocalizer(moment);
 
 const Bookings = () => {
   let { id } = useParams();
@@ -31,6 +30,7 @@ const Bookings = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents] = useState([]);
   const { isAuthenticated } = useAuth();
+  const calendarRef = useRef(null);
 
   useEffect(() => {
     dispatch(getRoom());
@@ -39,179 +39,154 @@ const Bookings = () => {
     dispatch(getModule());
   }, [dispatch]);
 
+  // Force calendar to render after component mounts
+  useEffect(() => {
+    if (calendarRef.current) {
+      const timer = setTimeout(() => {
+        calendarRef.current.getApi().render();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   useEffect(() => {
     if (bookings.length > 0) {
       const bookedDates = id
-        ? bookings.filter((booking) => booking.room === selectedRoom._id)
+        ? bookings.filter((booking) => booking.room === selectedRoom?._id)
         : bookings;
-      bookedDates.map((booking) => {
-        // make algorithm to save event in state
-        // 1. if activity flag is 0 change color to orange, otherwise blue
-        const color = booking.flag === 0 ? "orange" : "blue";
 
-        // 2. if activity recurrence is weekly, take the start date and add 7 days to it till the end date
+      const processedEvents = [];
+
+      bookedDates.forEach((booking) => {
+        // if activity flag is 0 change color to orange, otherwise blue
+        const backgroundColor = booking.flag === 0 ? "#ff9800" : "#3f51b5";
+        const borderColor = booking.flag === 0 ? "#f57c00" : "#303f9f";
+
+        // Weekly recurrence
         if (booking.activity.activity_recurrence === "weekly") {
-          console.log(booking);
           const startDate = moment(booking.activity.activity_starting_date);
           const endDate = moment(booking.activity.activity_ending_date);
           const diff = endDate.diff(startDate, "days");
-          const days = Math.ceil(diff / 7);
-          for (let i = 0; i < days; i++) {
-            let date = moment(booking.activity.activity_starting_date);
-            date.add(i * 7, "days");
-            // check if the starting date is the same as activity.activity_days[0]
-            // if yes, then use starting date to repeat on the same day
-            // if no, then use the date of activity.activity_days[0] to repeat on the same day
-            // activity.activity_days[0] is in numbers
-            // 0 is sunday, 1 is monday, 2 is tuesday, 3 is wednesday, 4 is thursday, 5 is friday, 6 is saturday
-            if (date.day() === booking.activity.activity_days[0]) {
-              const event = {
-                id: booking._id,
+          const weeks = Math.ceil(diff / 7);
+
+          for (let i = 0; i < weeks; i++) {
+            let date = moment(booking.activity.activity_starting_date).add(
+              i * 7,
+              "days"
+            );
+
+            if (date.day() !== booking.activity.activity_days[0]) {
+              const dayDiff = booking.activity.activity_days[0] - date.day();
+              date.add(dayDiff >= 0 ? dayDiff : dayDiff + 7, "days");
+            }
+
+            if (date.isSameOrBefore(endDate)) {
+              processedEvents.push({
+                id: `${booking._id}-${i}`,
                 title: booking.activity.activity_name,
-                start: new Date(
-                  date.year(),
-                  date.month(),
-                  date.date(),
-                  booking.activity.activity_time[0][0].split(":")[0],
-                  booking.activity.activity_time[0][0].split(":")[1]
-                ),
-                end: new Date(
-                  date.year(),
-                  date.month(),
-                  date.date(),
-
-                  booking.activity.activity_time[0][1].split(":")[0],
-                  booking.activity.activity_time[0][1].split(":")[1]
-                ),
-                color,
-                activity: booking.activity,
-              };
-              setEvents((prev) => [...prev, event]);
-            } else {
-              // check a date that is the same as activity.activity_days[0] and is after the starting date
-              let count = date.day();
-              while (count !== booking.activity.activity_days[0]) {
-                // get difference between the date and activity.activity_days[0]
-                // add the difference to the date
-                const diff = booking.activity.activity_days[0] - count;
-                date.add(diff, "days");
-                count += 1;
-              }
-
-              const event = {
-                id: booking._id,
-                title: booking.activity.activity_name,
-                start: new Date(
-                  date.year(),
-                  date.month(),
-                  date.date(),
-                  booking.activity.activity_time[0][0].split(":")[0],
-                  booking.activity.activity_time[0][0].split(":")[1]
-                ),
-                end: new Date(
-                  date.year(),
-                  date.month(),
-                  date.date(),
-
-                  booking.activity.activity_time[0][1].split(":")[0],
-                  booking.activity.activity_time[0][1].split(":")[1]
-                ),
-                color,
-                activity: booking.activity,
-              };
-              setEvents((prev) => [...prev, event]);
+                start: `${date.format("YYYY-MM-DD")}T${
+                  booking.activity.activity_time[0][0]
+                }`,
+                end: `${date.format("YYYY-MM-DD")}T${
+                  booking.activity.activity_time[0][1]
+                }`,
+                backgroundColor,
+                borderColor,
+                extendedProps: {
+                  bookingId: booking._id,
+                  activity: booking.activity,
+                  flag: booking.flag,
+                },
+              });
             }
           }
         }
 
-        // 3. if activity recurrence is monthly, take the start date and add 30 days to it till the end date
+        // Monthly recurrence
         if (booking.activity.activity_recurrence === "monthly") {
           const startDate = moment(booking.activity.activity_starting_date);
           const endDate = moment(booking.activity.activity_ending_date);
-          const diff = endDate.diff(startDate, "days");
-          const days = Math.ceil(diff / 30);
-          for (let i = 0; i < days; i++) {
-            const date = moment(booking.activity.activity_starting_date).add(
-              i * 30,
-              "days"
-            );
-            const event = {
-              id: booking._id,
-              title: booking.activity.activity_name,
-              start: new Date(
-                date.year(),
-                date.month(),
-                date.date(),
-                booking.activity.activity_time[0][0].split(":")[0],
-                booking.activity.activity_time[0][0].split(":")[1]
-              ),
-              end: new Date(
-                date.year(),
-                date.month(),
-                date.date(),
+          const months = endDate.diff(startDate, "months");
 
-                booking.activity.activity_time[0][1].split(":")[0],
-                booking.activity.activity_time[0][1].split(":")[1]
-              ),
-              color,
-              activity: booking.activity,
-            };
-            setEvents((prev) => [...prev, event]);
+          for (let i = 0; i <= months; i++) {
+            const date = moment(booking.activity.activity_starting_date).add(
+              i,
+              "months"
+            );
+
+            if (date.isSameOrBefore(endDate)) {
+              processedEvents.push({
+                id: `${booking._id}-${i}`,
+                title: booking.activity.activity_name,
+                start: `${date.format("YYYY-MM-DD")}T${
+                  booking.activity.activity_time[0][0]
+                }`,
+                end: `${date.format("YYYY-MM-DD")}T${
+                  booking.activity.activity_time[0][1]
+                }`,
+                backgroundColor,
+                borderColor,
+                extendedProps: {
+                  bookingId: booking._id,
+                  activity: booking.activity,
+                  flag: booking.flag,
+                },
+              });
+            }
           }
         }
 
-        // 4. if activity recurrence is certain_days, take activity_days array and add the days to the start date
+        // Certain days recurrence
         if (booking.activity.activity_recurrence === "certain_days") {
           const startDate = moment(booking.activity.activity_starting_date);
           const endDate = moment(booking.activity.activity_ending_date);
           const diff = endDate.diff(startDate, "days");
-          const days = Math.ceil(diff / 7);
-          for (let i = 0; i < days; i++) {
-            const date = moment(booking.activity.activity_starting_date).add(
-              i * 7,
-              "days"
-            );
-            const event = {
-              id: booking._id,
-              title: booking.activity.activity_name,
-              start: new Date(
-                date.year(),
-                date.month(),
-                date.date(),
-                // string time to time
-                booking.activity.activity_time[0][0].split(":")[0],
-                booking.activity.activity_time[0][0].split(":")[1]
-              ),
-              end: new Date(
-                date.year(),
-                date.month(),
-                date.date(),
+          const weeks = Math.ceil(diff / 7);
 
-                booking.activity.activity_time[0][1].split(":")[0],
-                booking.activity.activity_time[0][1].split(":")[1]
-              ),
-              color,
-              activity: booking.activity,
-            };
-            setEvents((prev) => [...prev, event]);
+          for (let i = 0; i < weeks; i++) {
+            booking.activity.activity_days.forEach((dayNum) => {
+              let date = moment(booking.activity.activity_starting_date).add(
+                i * 7,
+                "days"
+              );
+              const dayDiff = dayNum - date.day();
+              date.add(dayDiff >= 0 ? dayDiff : dayDiff + 7, "days");
+
+              if (
+                date.isSameOrBefore(endDate) &&
+                date.isSameOrAfter(startDate)
+              ) {
+                processedEvents.push({
+                  id: `${booking._id}-${i}-${dayNum}`,
+                  title: booking.activity.activity_name,
+                  start: `${date.format("YYYY-MM-DD")}T${
+                    booking.activity.activity_time[0][0]
+                  }`,
+                  end: `${date.format("YYYY-MM-DD")}T${
+                    booking.activity.activity_time[0][1]
+                  }`,
+                  backgroundColor,
+                  borderColor,
+                  extendedProps: {
+                    bookingId: booking._id,
+                    activity: booking.activity,
+                    flag: booking.flag,
+                  },
+                });
+              }
+            });
           }
         }
       });
-    }
-  }, []);
 
-  const eventStyleGetter = (event, start, end, isSelected) => {
-    const style = {
-      backgroundColor: event.color,
-      borderRadius: "0px",
-      opacity: 0.8,
-      color: "white",
-      border: "0px",
-      display: "block",
-    };
-    return {
-      style: style,
-    };
+      setEvents(processedEvents);
+    }
+  }, [bookings, id, selectedRoom]);
+
+  const handleEventClick = (clickInfo) => {
+    const bookingId = clickInfo.event.extendedProps.bookingId;
+    setSelectedEvent(bookingId);
+    setShowModal(true);
   };
   return (
     <>
@@ -233,19 +208,53 @@ const Bookings = () => {
                   New Schedule
                 </button>
               )}
-              {/* use react calendar datepicker component to display dates and times booked */}
-              <Calendar
-                localizer={localizer}
-                events={events}
-                onDoubleClickEvent={(event) => {
-                  console.log(event);
-                  setSelectedEvent(event.id);
-                  setShowModal(true);
+              {/* FullCalendar component */}
+              <FullCalendar
+                ref={calendarRef}
+                plugins={[
+                  dayGridPlugin,
+                  timeGridPlugin,
+                  listPlugin,
+                  interactionPlugin,
+                ]}
+                initialView="dayGridMonth"
+                headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
                 }}
-                startAccessor="start"
-                endAccessor="end"
-                eventPropGetter={eventStyleGetter}
-                style={{ height: 500 }}
+                events={events}
+                eventClick={handleEventClick}
+                editable={isAuthenticated}
+                selectable={isAuthenticated}
+                selectMirror={true}
+                dayMaxEvents={true}
+                weekends={true}
+                height="auto"
+                contentHeight={700}
+                slotMinTime="07:00:00"
+                slotMaxTime="22:00:00"
+                allDaySlot={false}
+                nowIndicator={true}
+                eventTimeFormat={{
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  meridiem: false,
+                }}
+                slotLabelFormat={{
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  meridiem: false,
+                }}
+                dayHeaderFormat={{ weekday: 'short' }}
+                loading={(isLoading) => {
+                  // Force re-render when loading completes
+                  if (!isLoading && calendarRef.current) {
+                    setTimeout(() => {
+                      calendarRef.current.getApi().render();
+                    }, 0);
+                  }
+                }}
               />
               {/* generate react bootstrap modal like of google calendar event popup modal */}
               <Modal

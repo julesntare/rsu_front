@@ -146,3 +146,420 @@
   color: #111 !important;
   overflow: hidden;
 }
+
+// FullCalendar Custom Styling
+.fc {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  // Toolbar styling
+  .fc-toolbar {
+    margin-bottom: 1.5rem;
+    padding: 1rem 0;
+    flex-wrap: wrap;
+    gap: 1rem;
+
+    .fc-toolbar-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: $color-primary;
+      text-transform: capitalize;
+      letter-spacing: 0.5px;
+    }
+
+    .fc-button {
+      background: white;
+      border: 2px solid $color-primary;
+      color: $color-primary;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      text-transform: capitalize;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: none;
+      font-size: 0.9rem;
+
+      &:hover {
+        background: $color-primary;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(52, 49, 229, 0.3);
+        border-color: $color-primary;
+      }
+
+      &:active,
+      &:focus {
+        background: $color-primary;
+        color: white;
+        border-color: $color-primary;
+        box-shadow: 0 0 0 3px rgba(52, 49, 229, 0.2);
+      }
+
+      &.fc-button-active {
+        background: $color-primary;
+        color: white;
+        border-color: $color-primary;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(52, 49, 229, 0.3);
+
+        &:hover {
+          background: rgba(52, 49, 229, 0.9);
+        }
+      }
+
+      &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+    }
+
+    .fc-button-group {
+      gap: 0.25rem;
+    }
+  }
+
+  // Header (day names) - Multiple selectors to ensure it works
+  .fc-col-header,
+  .fc-col-header-cell,
+  table thead {
+    background: $color-primary !important;
+  }
+
+  .fc-col-header-cell {
+    padding: 1rem 0.5rem !important;
+    border: none !important;
+    position: relative !important;
+    z-index: 1 !important;
+
+    a {
+      color: white !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      font-size: 0.85rem !important;
+      letter-spacing: 1px !important;
+      text-decoration: none !important;
+      position: relative !important;
+      z-index: 2 !important;
+    }
+  }
+
+  .fc-col-header-cell-cushion {
+    color: white !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 1px !important;
+    text-decoration: none !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+
+  // Force header row background for all possible selectors
+  .fc-scrollgrid-section-header,
+  .fc-scrollgrid-section-header > *,
+  .fc-scrollgrid-section-header table,
+  .fc-scrollgrid-section-header thead,
+  .fc-scrollgrid-section-header tr {
+    background: $color-primary !important;
+  }
+
+  // Ensure day names are visible and not hidden by pseudo-elements or overlays
+  .fc-col-header-cell::before,
+  .fc-col-header-cell::after {
+    display: none !important;
+  }
+
+  // Override any skeleton or loading styles that might be obscuring text
+  .fc-col-header-cell-cushion::before,
+  .fc-col-header-cell-cushion::after {
+    display: none !important;
+  }
+
+  // Ensure all day label text is visible with high specificity
+  .fc-scrollgrid-section-header .fc-col-header-cell a,
+  .fc-scrollgrid-section-header .fc-col-header-cell-cushion,
+  .fc-scrollgrid-section-header th a,
+  thead th a,
+  thead .fc-col-header-cell-cushion {
+    color: white !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: inline-block !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 1px !important;
+    text-decoration: none !important;
+  }
+
+  // Remove any skeleton loaders or overlays on header cells
+  // .fc-col-header-cell > *:not(a):not(.fc-col-header-cell-cushion) {
+  //   display: none !important;
+  // }
+
+  // Ensure header cells don't have background overlays
+  .fc-col-header-cell {
+    overflow: visible !important;
+
+    > * {
+      background: transparent !important;
+    }
+  }
+
+  // Force immediate rendering without animation delays
+  .fc-col-header-cell,
+  .fc-col-header-cell a,
+  .fc-col-header-cell-cushion {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  // Remove all potential skeleton/placeholder elements in header
+  .fc-col-header-cell {
+    // Ensure only text elements are visible
+    a, .fc-col-header-cell-cushion {
+      opacity: 1 !important;
+      width: auto !important;
+      height: auto !important;
+      background-color: transparent !important;
+      background-image: none !important;
+      color: white !important;
+      -webkit-text-fill-color: white !important;
+    }
+  }
+
+  // Additional ultra-high specificity for day names
+  table.fc-scrollgrid thead tr .fc-col-header-cell a,
+  table.fc-scrollgrid thead tr .fc-col-header-cell .fc-col-header-cell-cushion,
+  table thead tr th a,
+  table thead tr th .fc-col-header-cell-cushion {
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+    text-shadow: 0 0 1px rgba(0,0,0,0.3) !important;
+    font-size: 0.85rem !important;
+  }
+
+  // Remove any potential MUI skeleton loaders
+  .MuiSkeleton-root,
+  [class*="skeleton"],
+  [class*="Skeleton"],
+  [class*="placeholder"],
+  [class*="loader"] {
+    display: none !important;
+  }
+
+  // Day cells
+  .fc-daygrid-day,
+  .fc-timegrid-col {
+    border-color: #e0e0e0;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: rgba(52, 49, 229, 0.02);
+    }
+
+    &.fc-day-today {
+      background-color: rgba(52, 49, 229, 0.08);
+      position: relative;
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: $color-primary;
+      }
+    }
+
+    &.fc-day-other {
+      background-color: #f8f9fa;
+      opacity: 0.6;
+    }
+  }
+
+  // Day numbers
+  .fc-daygrid-day-number {
+    padding: 0.5rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+  }
+
+  .fc-day-today .fc-daygrid-day-number {
+    background: $color-primary;
+    color: white;
+    border-radius: 50%;
+    width: 2.2rem;
+    height: 2.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+
+  // Events
+  .fc-event {
+    border-radius: 0.4rem;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      filter: brightness(1.1);
+    }
+
+    .fc-event-time {
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+
+    .fc-event-title {
+      font-weight: 600;
+    }
+  }
+
+  .fc-daygrid-event {
+    margin: 2px 3px;
+  }
+
+  // More events link
+  .fc-daygrid-more-link {
+    background-color: transparent;
+    color: $color-primary;
+    font-weight: 700;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.3rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: rgba(52, 49, 229, 0.1);
+      text-decoration: none;
+    }
+  }
+
+  // Time grid (week/day view)
+  .fc-timegrid-slot {
+    height: 3rem;
+    border-color: #e8e8e8;
+  }
+
+  .fc-timegrid-slot-label {
+    border-color: #e0e0e0;
+    font-weight: 600;
+    color: #666;
+    font-size: 0.85rem;
+  }
+
+  .fc-timegrid-axis {
+    border-color: #e0e0e0;
+  }
+
+  // Current time indicator
+  .fc-timegrid-now-indicator-line {
+    border-color: $color-primary;
+    border-width: 2px;
+  }
+
+  .fc-timegrid-now-indicator-arrow {
+    border-color: $color-primary;
+    border-width: 8px;
+  }
+
+  // List view
+  .fc-list {
+    border-radius: 0.5rem;
+    overflow: hidden;
+
+    .fc-list-day-cushion {
+      background: linear-gradient(135deg, $color-primary 0%, rgba(52, 49, 229, 0.85) 100%);
+      color: white;
+      padding: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+    }
+
+    .fc-list-event {
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:hover {
+        background-color: rgba(52, 49, 229, 0.05);
+      }
+
+      td {
+        padding: 0.75rem 1rem;
+        border-color: #e0e0e0;
+      }
+    }
+
+    .fc-list-event-dot {
+      border-width: 6px;
+    }
+
+    .fc-list-event-time {
+      font-weight: 600;
+      color: #666;
+    }
+
+    .fc-list-event-title {
+      font-weight: 600;
+    }
+  }
+
+  // Scrollgrid (general grid styling)
+  .fc-scrollgrid {
+    border-color: #e0e0e0;
+    border-radius: 0.5rem;
+    overflow: hidden;
+  }
+
+  .fc-scrollgrid-section-header > * {
+    border: none;
+  }
+
+  // Popover (for more events)
+  .fc-popover {
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border: 1px solid #e0e0e0;
+
+    .fc-popover-header {
+      background: $color-primary;
+      color: white;
+      padding: 0.75rem 1rem;
+      font-weight: 700;
+    }
+
+    .fc-popover-body {
+      padding: 0.5rem;
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    padding: 1rem;
+
+    .fc-toolbar {
+      .fc-toolbar-title {
+        font-size: 1.25rem;
+      }
+
+      .fc-button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+      }
+    }
+  }
+}
