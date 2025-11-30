@@ -9,7 +9,8 @@ import "react-tabs/style/react-tabs.css";
 import { getOffice } from "../../redux/actions/OfficeActions";
 import NumbersToOrdinalForm from "../utils/NumbersToOrdinalForm";
 import NumbersToDaysForm from "../utils/NumbersToDaysForm";
-import { TextField } from "@mui/material";
+import { TextField, InputAdornment } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
 import { getBooking } from "../../redux/actions/BookingActions";
 import { ProgressBar, Tooltip } from "react-bootstrap";
 
@@ -31,46 +32,30 @@ const AllRooms = (props) => {
     dispatch(getRoom());
     dispatch(getOffice());
     dispatch(getBooking());
-    if (hasParam) {
-      setCurrRooms((currRooms) => [
-        ...currRooms,
-        ...rooms.filter(
-          (room) => room.room_building && room.room_building._id === param.id
-        ),
-      ]);
-      setFilteredRooms((currRooms) => [
-        ...currRooms,
-        ...rooms.filter(
-          (room) => room.room_building && room.room_building._id === param.id
-        ),
-      ]);
-      setCurrOffices((currOffices) => [
-        ...currOffices,
-        ...offices.filter(
-          (office) =>
-            office.office_building_location &&
-            office.office_building_location._id === param.id
-        ),
-      ]);
-      setFilteredOffices((currOffices) => [
-        ...currOffices,
-        ...offices.filter(
-          (office) =>
-            office.office_building_location &&
-            office.office_building_location._id === param.id
-        ),
-      ]);
-    } else {
-      rooms.map((room) => {
-        setCurrRooms((currRooms) => [...currRooms, room]);
-        setFilteredRooms((currRooms) => [...currRooms, room]);
-      });
-      offices.map((office) => {
-        setCurrOffices((currOffices) => [...currOffices, office]);
-        setFilteredOffices((currOffices) => [...currOffices, office]);
-      });
-    }
   }, [dispatch]);
+
+  useEffect(() => {
+    if (hasParam) {
+      const filteredRoomsList = rooms.filter(
+        (room) => room.room_building && room.room_building._id === param.id
+      );
+      setCurrRooms(filteredRoomsList);
+      setFilteredRooms(filteredRoomsList);
+
+      const filteredOfficesList = offices.filter(
+        (office) =>
+          office.office_building_location &&
+          office.office_building_location._id === param.id
+      );
+      setCurrOffices(filteredOfficesList);
+      setFilteredOffices(filteredOfficesList);
+    } else {
+      setCurrRooms(rooms);
+      setFilteredRooms(rooms);
+      setCurrOffices(offices);
+      setFilteredOffices(offices);
+    }
+  }, [rooms, offices, hasParam, param.id]);
 
   // navigate to rooms when requestRooms clicked
   const navigateToBooking = (e, i) => {
@@ -282,31 +267,43 @@ const AllRooms = (props) => {
         </TabList>
 
         <TabPanel>
+          <div className="search-container">
+            <TextField
+              id="standard-basic"
+              label="Search & filter rooms"
+              variant="outlined"
+              size="medium"
+              style={{ width: "320px" }}
+              onChange={searchRooms}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon className="search-icon" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </div>
           <div className="d-flex row h-100" id="rooms-box">
-            <div
-              className="d-flex justify-content-end align-items-center"
-              style={{ width: "100%" }}
-            >
-              <TextField
-                id="standard-basic"
-                label="Search & filter rooms"
-                style={{ width: "200px" }}
-                onChange={searchRooms}
-              />
-            </div>
             {roomsRender}
           </div>
         </TabPanel>
         <TabPanel>
-          <div
-            className="d-flex justify-content-end align-items-center"
-            style={{ width: "100%" }}
-          >
+          <div className="search-container">
             <TextField
-              id="standard-basic"
+              id="standard-basic-offices"
               label="Search & filter offices"
-              style={{ width: "200px" }}
+              variant="outlined"
+              size="medium"
+              style={{ width: "320px" }}
               onChange={searchOffices}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon className="search-icon" />
+                  </InputAdornment>
+                ),
+              }}
             />
           </div>
           <div className="d-flex row h-100" id="rooms-box">
