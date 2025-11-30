@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./Buildings.scss";
 import BuildingGoogleMap from "../Maps/BuildingGoogleMap";
+import BuildingCardSkeleton from "./BuildingCardSkeleton";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getBuilding } from "../../redux/actions/BuildingActions";
@@ -12,6 +13,9 @@ const Buildings = () => {
   const navigate = useNavigate();
   const [locationMarker, setLocationMarker] = useState(false);
   const [latLong, setLatLong] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [dataFetched, setDataFetched] = useState(false);
+
   const showBuildingLocation = (item) => {
     setLocationMarker(true);
     setLatLong({
@@ -27,7 +31,15 @@ const Buildings = () => {
   };
 
   useEffect(() => {
-    dispatch(getBuilding());
+    const fetchData = async () => {
+      await dispatch(getBuilding());
+      // Add minimum delay to ensure smooth transition
+      setTimeout(() => {
+        setDataFetched(true);
+        setIsLoading(false);
+      }, 800);
+    };
+    fetchData();
   }, [dispatch]);
 
   return (
@@ -38,7 +50,12 @@ const Buildings = () => {
       </h3>
       <hr />
       <div className="my-2 bg-none buildings-box pt-3 row mt-2">
-        {buildings ? (
+        {isLoading ? (
+          // Show skeleton loaders while loading
+          Array.from({ length: 6 }).map((_, index) => (
+            <BuildingCardSkeleton key={index} />
+          ))
+        ) : buildings && buildings.length > 0 ? (
           buildings.map((item, i) => {
             return (
               <div

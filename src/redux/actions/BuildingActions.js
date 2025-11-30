@@ -8,13 +8,14 @@ export const MODIFY_BUILDING = "MODIFY_BUILDING";
 export const DELETE_ALL_BUILDING = "DELETE_ALL_BUILDING";
 
 export const getBuilding = () => (dispatch) => {
-  fetch(`${import.meta.env.VITE_RSU_API_URL}/building/all`)
+  return fetch(`${import.meta.env.VITE_RSU_API_URL}/building/all`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
         type: GET_BUILDING,
         payload: data,
       });
+      return data;
     });
 };
 
