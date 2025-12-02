@@ -47,7 +47,7 @@ const Buildings = () => {
         Buildings
       </h3>
       <hr />
-      <div className="my-2 bg-none buildings-box pt-3 row mt-2">
+      <div className="my-2 bg-none buildings-box pt-2 row mt-1">
         {isLoading ? (
           // Show skeleton loaders while loading
           Array.from({ length: 6 }).map((_, index) => (
@@ -57,15 +57,15 @@ const Buildings = () => {
           buildings.map((item, i) => {
             return (
               <div
-                className="card border building-card m-1 mt-3 p-0 col-12 col-md-4 col-lg-3 d-flex flex-column"
+                className="card border building-card m-1 mt-2 p-0 col-12 col-md-4 col-lg-3 d-flex flex-column"
                 key={item._id}
               >
                 <img
-                  className="card-img-top m-0 pb-3"
+                  className="card-img-top m-0 pb-2"
                   src={item.img_url || defaultImg}
                   alt="building image"
                 ></img>
-                <div className="d-flex justify-content-center align-items-center my-2">
+                <div className="d-flex justify-content-center align-items-center my-1">
                   <h6 className="text-center card-name-title mb-0">
                     {item.building_name.toUpperCase()}
                   </h6>
@@ -76,8 +76,8 @@ const Buildings = () => {
                     </span>
                   </div>
                 </div>
-                <div className="card-body p-2 pb-3">
-                  <div className="w-100 d-flex justify-content-evenly text-dark pb-3">
+                <div className="card-body p-2 pb-2">
+                  <div className="w-100 d-flex justify-content-evenly text-dark pb-2">
                     <span className="d-flex justify-content-center align-items-center me-2">
                       <i className="bi me-3 bi-buildings"></i>
                       {item.floors} Floors
@@ -88,7 +88,7 @@ const Buildings = () => {
                       {item.no_of_rooms} Rooms
                     </span>
                   </div>
-                  <div className="w-100 d-flex flex-column justify-content-evenly text-dark pb-3">
+                  <div className="w-100 d-flex flex-column justify-content-evenly text-dark pb-2">
                     <span>Nearlest Places: </span>
                     <b>
                       <i>{item.near_locations.join(", ")}</i>
