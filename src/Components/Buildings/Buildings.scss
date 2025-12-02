@@ -5,36 +5,173 @@
   position: relative;
   z-index: 5;
   opacity: 1 !important;
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
 
   .buildings-box {
     display: flex;
     justify-content: space-around;
     flex-wrap: wrap;
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
 
     .building-card {
       border-radius: 15px !important;
+      min-height: 550px !important;
+
       .card-img-top {
         border-top-right-radius: 15px !important;
         border-top-left-radius: 15px !important;
         height: 250px;
         object-fit: cover;
       }
+
       .card-name-title {
         font-weight: bolder;
         font-family: sans-serif;
       }
+
+      .info-icon-wrapper {
+        position: relative;
+        display: inline-block;
+
+        .info-icon {
+          color: #6c757d;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: color 0.3s ease;
+
+          &:hover {
+            color: $color-primary;
+          }
+        }
+
+        .custom-tooltip {
+          visibility: hidden;
+          opacity: 0;
+          background-color: rgba(0, 0, 0, 0.9);
+          color: #fff;
+          text-align: center;
+          border-radius: 6px;
+          padding: 8px 12px;
+          position: absolute;
+          z-index: 1000;
+          bottom: 125%;
+          left: 50%;
+          transform: translateX(-50%);
+          white-space: normal;
+          width: 200px;
+          font-size: 0.85rem;
+          font-weight: normal;
+          font-style: italic;
+          line-height: 1.4;
+          transition: opacity 0.3s, visibility 0.3s;
+          pointer-events: none;
+
+          &::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+          }
+        }
+
+        &:hover .custom-tooltip {
+          visibility: visible;
+          opacity: 1;
+        }
+      }
+
+      .card-body {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
       .btn-box {
         background: transparent !important;
-        button {
+        margin-top: 0;
+
+        .btn-rooms,
+        .btn-map {
           border: none;
-          transition: all 0.5s ease-in-out;
+          padding: 10px 16px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+          flex: 1;
+          min-width: 0;
+
+          i {
+            font-size: 1rem;
+          }
+
+          span {
+            position: relative;
+            z-index: 1;
+          }
+
+          &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            transition: left 0.3s ease;
+            z-index: 0;
+          }
+
+          &:hover::before {
+            left: 0;
+          }
+
+          &:active {
+            transform: scale(0.98);
+          }
+        }
+
+        .btn-rooms {
+          background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+          color: white;
+          box-shadow: 0 4px 15px rgba(74, 144, 226, 0.35);
+
+          &::before {
+            background: linear-gradient(135deg, #357abd 0%, #2c6ba8 100%);
+          }
+
           &:hover {
-            background: $bg-body !important;
-            color: $color-primary !important;
-            border: 1px solid $color-primary;
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.5);
+            transform: translateY(-2px);
+          }
+        }
+
+        .btn-map {
+          background: linear-gradient(135deg, #16a085 0%, #138d75 100%);
+          color: white;
+          box-shadow: 0 4px 15px rgba(22, 160, 133, 0.35);
+
+          &::before {
+            background: linear-gradient(135deg, #138d75 0%, #117a65 100%);
+          }
+
+          &:hover {
+            box-shadow: 0 6px 20px rgba(22, 160, 133, 0.5);
+            transform: translateY(-2px);
           }
         }
       }
+
       transition: all 0.5s ease-in-out;
     }
   }

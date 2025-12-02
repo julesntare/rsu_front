@@ -14,7 +14,6 @@ const Buildings = () => {
   const [locationMarker, setLocationMarker] = useState(false);
   const [latLong, setLatLong] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [dataFetched, setDataFetched] = useState(false);
 
   const showBuildingLocation = (item) => {
     setLocationMarker(true);
@@ -35,7 +34,6 @@ const Buildings = () => {
       await dispatch(getBuilding());
       // Add minimum delay to ensure smooth transition
       setTimeout(() => {
-        setDataFetched(true);
         setIsLoading(false);
       }, 800);
     };
@@ -59,7 +57,7 @@ const Buildings = () => {
           buildings.map((item, i) => {
             return (
               <div
-                className="card border building-card m-1 mt-3 p-0 col-12 col-md-4 col-lg-3"
+                className="card border building-card m-1 mt-3 p-0 col-12 col-md-4 col-lg-3 d-flex flex-column"
                 key={item._id}
               >
                 <img
@@ -67,14 +65,18 @@ const Buildings = () => {
                   src={item.img_url || defaultImg}
                   alt="building image"
                 ></img>
-                <h6 className="text-center card-name-title my-2">
-                  {" "}
-                  {item.building_name.toUpperCase()}
-                </h6>
-                <p className="mx-2">
-                  <i>{item.building_description}</i>
-                </p>
-                <div className="card-body p-2">
+                <div className="d-flex justify-content-center align-items-center my-2">
+                  <h6 className="text-center card-name-title mb-0">
+                    {item.building_name.toUpperCase()}
+                  </h6>
+                  <div className="info-icon-wrapper ms-2">
+                    <i className="bi bi-info-circle info-icon"></i>
+                    <span className="custom-tooltip">
+                      {item.building_description}
+                    </span>
+                  </div>
+                </div>
+                <div className="card-body p-2 pb-3">
                   <div className="w-100 d-flex justify-content-evenly text-dark pb-3">
                     <span className="d-flex justify-content-center align-items-center me-2">
                       <i className="bi me-3 bi-buildings"></i>
@@ -92,22 +94,24 @@ const Buildings = () => {
                       <i>{item.near_locations.join(", ")}</i>
                     </b>
                   </div>
-                  <div className="py-1 d-flex flex-column justify-content-center btn-box">
+                  <div className="py-1 d-flex justify-content-center gap-2 btn-box">
                     {item.no_of_rooms > 0 && (
                       <button
-                        className=" d-flex justify-content-center bg-primary text-white fw-bold btn-sm align-items-center rounded-pill py-2"
+                        className="btn-rooms d-flex justify-content-center align-items-center flex-1"
                         onClick={() => handleBuildingClick(item._id)}
                       >
-                        <i className="bi fw-bold bi-eye me-3"></i>Head to Rooms
+                        <i className="bi bi-eye me-2"></i>
+                        <span>Rooms</span>
                       </button>
                     )}
                     <Link
                       to={`/maps/${item.coordinates.join("&")}`}
-                      className="my-2 bg-primary d-flex justify-content-center text-decoration-none text-white fw-bold btn-sm align-items-center rounded-pill py-2"
+                      className="btn-map d-flex justify-content-center text-decoration-none align-items-center flex-1"
                       id={i}
                       onClick={() => showBuildingLocation(item)}
                     >
-                      <i className="bi bi-geo-alt me-3"> </i>Navigate on Map
+                      <i className="bi bi-geo-alt me-2"></i>
+                      <span>Map</span>
                     </Link>
                   </div>
                 </div>
