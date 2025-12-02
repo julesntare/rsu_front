@@ -1,413 +1,570 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import "./BuildingGoogleMap.scss";
 import mapboxgl from "mapbox-gl";
-import { distance as turf } from "@turf/turf";
+import "mapbox-gl/dist/mapbox-gl.css";
+// import { distance as turf } from "@turf/turf";
 import { Button, Modal } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { getBuilding } from "../../redux/actions/BuildingActions";
-import { useParams } from "react-router-dom";
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_API_KEY;
 
 export default function Maps() {
-  const param = useParams();
   const [active, setActive] = useState("");
-  const [center, setCenter] = useState([30.06323, -1.95877]);
-  const [otherLocations, setOtherLocations] = useState([]);
-  const [locationEnabled, setLocationEnabled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showInstructions, setShowInstructions] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+
   const buildings = useSelector((state) => state.buildings);
   const dispatch = useDispatch();
 
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+  const markersRef = useRef([]);
+  const layersRef = useRef([]);
+  const activePopupRef = useRef(null);
+
+  // Fetch buildings on mount
   useEffect(() => {
     dispatch(getBuilding());
   }, [dispatch]);
 
-  const mapContainer = useRef(null);
-  const map = useRef(null);
-  const [zoom, setZoom] = useState(15);
+  const displayInstructions = (route) => {
+    const instructions = document.getElementById("instructions");
+    if (!instructions) return;
 
-  useEffect(() => {
-    if (map.current) return; // initialize map only once
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: center,
-      zoom: zoom,
+    const steps = route.legs[0].steps;
+
+    let html = `<p><strong>Trip duration: ${Math.floor(
+      route.duration / 60
+    )} min 🚴</strong></p><ol>`;
+    steps.forEach((step) => {
+      html += `<li>${step.maneuver.instruction}</li>`;
     });
-    map.current.on("move", () => {
-      setCenter([
-        map.current.getCenter().lng.toFixed(4),
-        map.current.getCenter().lat.toFixed(4),
-      ]);
-      setZoom(map.current.getZoom().toFixed(5));
-    });
+    html += "</ol>";
 
-    route();
-  }, [map.current, navigator.geolocation]);
-
-  const locate = () => {
-    map.current.addControl(
-      new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true,
-        },
-        // When active the map will receive updates to the device's location as it changes.
-        trackUserLocation: true,
-        style: {
-          right: 10,
-          top: 10,
-        },
-        position: "bottom-left",
-        // Draw an arrow next to the location dot to indicate which direction the device is heading.
-        showUserHeading: true,
-      })
-    );
+    instructions.innerHTML = html;
+    setShowInstructions(true);
   };
 
-  function toPoint(lng, lat) {
-    return {
-      type: "Point",
-      coordinates: [lng, lat],
-    };
-  }
+  const getRoute = async (destination) => {
+    if (!userLocation) return;
 
-  const route = async () => {
-    await Promise.all(
-      buildings.map(async (building) => {
-        setOtherLocations([
-          ...otherLocations,
-          {
-            type: "Feature",
-            properties: {},
-            geometry: {
-              type: "Point",
-              coordinates: [building.coordinates[1], building.coordinates[0]],
-            },
+    try {
+      const query = await fetch(
+        `https://api.mapbox.com/directions/v5/mapbox/cycling/${userLocation[0]},${userLocation[1]};${destination[0]},${destination[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`
+      );
+      const json = await query.json();
+
+      if (!json.routes || json.routes.length === 0) return;
+
+      const route = json.routes[0];
+      const geojson = {
+        type: "Feature",
+        geometry: route.geometry,
+      };
+
+      // Remove existing route
+      if (map.current.getSource("route")) {
+        map.current.getSource("route").setData(geojson);
+      } else {
+        map.current.addSource("route", {
+          type: "geojson",
+          data: geojson,
+        });
+
+        map.current.addLayer({
+          id: "route",
+          type: "line",
+          source: "route",
+          layout: {
+            "line-join": "round",
+            "line-cap": "round",
           },
-        ]);
-      })
-    );
-
-    locate();
-    map.current.on("load", () => {
-      // check if the user has given permission to access the location
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => {
-          setLocationEnabled(true);
-          // Add starting point to the map
-          map.current.addLayer({
-            id: "point",
-            type: "circle",
-            source: {
-              type: "geojson",
-              data: {
-                type: "FeatureCollection",
-                features: [
-                  {
-                    type: "Feature",
-                    properties: {},
-                    geometry: {
-                      type: "Point",
-                      coordinates: [
-                        position.coords.longitude,
-                        position.coords.latitude,
-                      ],
-                    },
-                  },
-                ],
-              },
-            },
-            paint: {
-              "circle-radius": 10,
-              "circle-color": "#3887be",
-            },
-          });
-          // re-center the map
-          map.current.flyTo({
-            center: [position.coords.longitude, position.coords.latitude],
-            essential: true, // this animation is considered essential with respect to prefers-reduced-motion
-            zoom: 15,
-          });
+          paint: {
+            "line-color": "#3887be",
+            "line-width": 5,
+            "line-opacity": 0.75,
+          },
         });
       }
 
-      // make an initial directions request that
-      // starts and ends at the same location
-      // getRoute(start);
+      // Add destination marker
+      if (map.current.getLayer("destination")) {
+        map.current.getSource("destination").setData({
+          type: "Feature",
+          geometry: {
+            type: "Point",
+            coordinates: destination,
+          },
+        });
+      } else {
+        map.current.addSource("destination", {
+          type: "geojson",
+          data: {
+            type: "Feature",
+            geometry: {
+              type: "Point",
+              coordinates: destination,
+            },
+          },
+        });
 
-      new mapboxgl.Popup()
-        .setHTML("<p>This is your current location</p>")
-        .setLngLat(center)
-        .addTo(map.current);
-    });
+        map.current.addLayer({
+          id: "destination",
+          type: "circle",
+          source: "destination",
+          paint: {
+            "circle-radius": 10,
+            "circle-color": "#B194ED",
+          },
+        });
+      }
+
+      // Show instructions
+      displayInstructions(route);
+    } catch (error) {
+      console.error("Error getting route:", error);
+    }
   };
 
+  const handleMapClick = (e) => {
+    if (!map.current || !userLocation) return;
+
+    const clickedCoords = [e.lngLat.lng, e.lngLat.lat];
+
+    // Get directions to clicked point
+    getRoute(clickedCoords);
+  };
+
+  // Initialize map
   useEffect(() => {
-    map.current.on("click", (event) => {
-      // Calculate the distance between the current location and the clicked location
-      const distance = turf(
-        toPoint(center[0], center[1]),
-        toPoint(event.lngLat.lng, event.lngLat.lat),
-        {
-          units: "meters",
+    if (map.current || !mapContainer.current) return;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: [30.06323, -1.95877],
+      zoom: 15,
+    });
+
+    map.current.on("load", () => {
+      setMapLoaded(true);
+    });
+
+    // Add controls
+    map.current.addControl(
+      new mapboxgl.NavigationControl({
+        showCompass: true,
+        showZoom: true,
+      }),
+      "top-right"
+    );
+
+    map.current.addControl(
+      new mapboxgl.GeolocateControl({
+        positionOptions: { enableHighAccuracy: true },
+        trackUserLocation: true,
+        showUserHeading: true,
+      }),
+      "top-right"
+    );
+
+    // Get user location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const coords = [position.coords.longitude, position.coords.latitude];
+          setUserLocation(coords);
+
+          map.current.flyTo({
+            center: coords,
+            zoom: 15,
+            essential: true,
+          });
+
+          // Add user location marker
+          new mapboxgl.Marker({ color: "#3887be" })
+            .setLngLat(coords)
+            .setPopup(
+              new mapboxgl.Popup({ offset: 25 }).setHTML(
+                "<p>Your current location</p>"
+              )
+            )
+            .addTo(map.current);
+        },
+        () => {
+          setShowLocationModal(true);
         }
       );
+    }
 
-      // Set a threshold distance (in meters)
-      const threshold = 40; // 40 meter
+    // Add map click listener
+    map.current.on("click", (e) => {
+      handleMapClick(e);
+    });
 
-      if (distance <= threshold) {
-        new mapboxgl.Popup()
-          .setHTML("<p>This is your current location</p>")
-          .setLngLat(center)
-          .addTo(map.current);
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const addBuildingMarkers = useCallback(() => {
+    if (!map.current || !map.current.loaded()) return;
+
+    // Clear existing markers and layers
+    markersRef.current.forEach((marker) => {
+      try {
+        marker.remove();
+      } catch (e) {
+        console.warn("Error removing marker:", e);
+      }
+    });
+    markersRef.current = [];
+
+    layersRef.current.forEach((layerId) => {
+      try {
+        if (map.current.getLayer(layerId)) {
+          map.current.removeLayer(layerId);
+        }
+        if (map.current.getSource(layerId)) {
+          map.current.removeSource(layerId);
+        }
+      } catch (e) {
+        console.warn(`Error removing layer ${layerId}:`, e);
+      }
+    });
+    layersRef.current = [];
+
+    buildings.forEach((building, index) => {
+      if (!building.coordinates || building.coordinates.length !== 2) {
+        console.warn(`Invalid coordinates for ${building.building_name}`);
         return;
       }
 
-      for (let i = 0; i < buildings.length; i++) {
-        const distance = turf(
-          toPoint(buildings[i].coordinates[1], buildings[i].coordinates[0]),
-          toPoint(event.lngLat.lng, event.lngLat.lat),
-          {
-            units: "meters",
+      const coords = [building.coordinates[1], building.coordinates[0]];
+      const glowLayerId = `building-glow-${index}`;
+      const markerLayerId = `building-marker-${index}`;
+
+      try {
+        // Add glow layer
+        if (!map.current.getSource(glowLayerId)) {
+          map.current.addSource(glowLayerId, {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              geometry: {
+                type: "Point",
+                coordinates: coords,
+              },
+            },
+          });
+
+          map.current.addLayer({
+            id: glowLayerId,
+            type: "circle",
+            source: glowLayerId,
+            paint: {
+              "circle-radius": 16,
+              "circle-color": "#f30",
+              "circle-opacity": 0.2,
+              "circle-blur": 0.5,
+            },
+          });
+
+          layersRef.current.push(glowLayerId);
+        }
+
+        // Add main marker layer
+        if (!map.current.getSource(markerLayerId)) {
+          map.current.addSource(markerLayerId, {
+            type: "geojson",
+            data: {
+              type: "Feature",
+              geometry: {
+                type: "Point",
+                coordinates: coords,
+              },
+            },
+          });
+
+          map.current.addLayer({
+            id: markerLayerId,
+            type: "circle",
+            source: markerLayerId,
+            paint: {
+              "circle-radius": 10,
+              "circle-color": "#f30",
+              "circle-stroke-width": 3,
+              "circle-stroke-color": "#fff",
+            },
+          });
+
+          layersRef.current.push(markerLayerId);
+        }
+
+        // Add label marker
+        const el = document.createElement("div");
+        el.className = "building-marker-label";
+        el.textContent = building.building_name;
+
+        const popup = new mapboxgl.Popup({
+          offset: 25,
+          closeButton: true,
+          closeOnClick: false,
+          maxWidth: "300px",
+        }).setHTML(`
+          <div class="building-popup">
+            <h4>${building.building_name}</h4>
+            <p>${
+              building.building_description || "No description available"
+            }</p>
+          </div>
+        `);
+
+        const marker = new mapboxgl.Marker({ element: el })
+          .setLngLat(coords)
+          .setPopup(popup)
+          .addTo(map.current);
+
+        // Close other popups when this one opens
+        marker.getElement().addEventListener("click", () => {
+          // Close active standalone popup
+          if (activePopupRef.current) {
+            activePopupRef.current.remove();
+            activePopupRef.current = null;
           }
-        ).toFixed(1);
 
-        if (distance <= threshold) {
-          let distanceText =
-            distance < 900 ? `${distance} meters` : `${distance / 1000} kms`;
-          new mapboxgl.Popup()
-            .setHTML(
-              `<b>${buildings[i].building_name}</b> <hr/>
-            <p>${buildings[i].building_description}</p>
-            <i><b>${distanceText}</b> to reach there</i>
-            `
-            )
-            .setLngLat([
-              buildings[i].coordinates[1],
-              buildings[i].coordinates[0],
-            ])
-            .addTo(map.current);
-          break;
-        }
+          // Close all other marker popups
+          markersRef.current.forEach((m) => {
+            if (m !== marker) {
+              const p = m.getPopup();
+              if (p && p.isOpen()) {
+                p.remove();
+              }
+            }
+          });
+        });
+
+        markersRef.current.push(marker);
+      } catch (error) {
+        console.error(
+          `Error adding marker for ${building.building_name}:`,
+          error
+        );
       }
-
-      getShortRoute(event.lngLat);
-    });
-  }, [buildings, center]);
-
-  const getShortRoute = (lngLat) => {
-    const coords = Object.keys(lngLat).map((key) => lngLat[key]);
-    const end = {
-      type: "FeatureCollection",
-      features: [
-        {
-          type: "Feature",
-          properties: {},
-          geometry: {
-            type: "Point",
-            coordinates: coords,
-          },
-        },
-      ],
-    };
-    if (map.current.getLayer("end")) {
-      map.current.getSource("end").setData(end);
-    } else {
-      map.current.addLayer({
-        id: "end",
-        type: "circle",
-        source: {
-          type: "geojson",
-          data: {
-            type: "FeatureCollection",
-            features: [
-              {
-                type: "Feature",
-                properties: {},
-                geometry: {
-                  type: "Point",
-                  coordinates: coords,
-                },
-              },
-            ],
-          },
-        },
-        paint: {
-          "circle-radius": 10,
-          "circle-color": "#B194ED",
-        },
-      });
-    }
-    getRoute(coords);
-  };
-
-  async function getRoute(end) {
-    const query = await fetch(
-      `https://api.mapbox.com/directions/v5/mapbox/cycling/${center[0]},${center[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}`,
-      { method: "GET" }
-    );
-    const json = await query.json();
-    const data = json.routes[0];
-    const route = data.geometry.coordinates;
-    const geojson = {
-      type: "Feature",
-      properties: {},
-      geometry: {
-        type: "LineString",
-        coordinates: route,
-      },
-    };
-    // if the route already exists on the map, we'll reset it using setData
-    if (map.current.getSource("route")) {
-      map.current.getSource("route").setData(geojson);
-    }
-    // otherwise, we'll make a new request
-    else {
-      map.current.addLayer({
-        id: "route",
-        type: "line",
-        source: {
-          type: "geojson",
-          data: geojson,
-        },
-        layout: {
-          "line-join": "round",
-          "line-cap": "round",
-        },
-        paint: {
-          "line-color": "#3887be",
-          "line-width": 5,
-          "line-opacity": 0.75,
-        },
-      });
-    }
-    // get the sidebar and add the instructions
-    const instructions = document.getElementById("instructions");
-    const steps = data.legs[0].steps;
-
-    let tripInstructions = "";
-    for (const step of steps) {
-      tripInstructions += `<li>${step.maneuver.instruction}</li>`;
-    }
-    instructions.innerHTML = `<p><strong>Trip duration: ${Math.floor(
-      data.duration / 60
-    )} min 🚴 </strong></p><ol>${tripInstructions}</ol>`;
-  }
-
-  // request user location enabling
-  useEffect(() => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setCenter([position.coords.longitude, position.coords.latitude]);
-
-          setLocationEnabled(true);
-          return;
-        },
-        (error) => {
-          setLocationEnabled(false);
-        }
-      );
-    } else {
-      alert("Better to enable your location for best way to follow.");
-    }
-  }, [navigator.geolocation]);
-
-  const handleBuildingClick = (building, id) => {
-    setActive(id);
-    // convert the building location to a lngLat and assign them to getShortRoute function
-    const lngLat = {
-      lng: building.coordinates[1],
-      lat: building.coordinates[0],
-    };
-
-    getShortRoute(lngLat);
-  };
-
-  useEffect(() => {
-    // add other building for each other locations
-    buildings.map(async (location, index) => {
-      await map.current.addLayer({
-        id: `point${index}`,
-        type: "circle",
-        source: {
-          type: "geojson",
-          data: {
-            type: "FeatureCollection",
-            features: [
-              {
-                type: "Feature",
-                properties: {},
-                geometry: {
-                  type: "Point",
-                  coordinates: [
-                    location.coordinates[1],
-                    location.coordinates[0],
-                  ],
-                },
-              },
-            ],
-          },
-        },
-        paint: {
-          "circle-radius": 10,
-          "circle-color": "#f30",
-        },
-      });
-
-      // new mapboxgl.Popup()
-      //   .setHTML("<p><b>" + location.building_name + "</b></p><br/>")
-      //   .setLngLat([location.coordinates[1], location.coordinates[0]])
-      //   .addTo(map.current);
     });
   }, [buildings]);
 
-  const buildingsList =
-    buildings &&
-    buildings.map((building, i) => (
-      <li
-        key={i}
-        className={active === i ? "active list-group-item" : " list-group-item"}
-        onClick={() => handleBuildingClick(building, i)}
-      >
-        {building.building_name}
-      </li>
-    ));
+  // Add building markers when buildings load
+  useEffect(() => {
+    if (!map.current || buildings.length === 0) return;
+
+    const addMarkers = () => {
+      if (map.current && map.current.loaded()) {
+        addBuildingMarkers();
+      }
+    };
+
+    // Wait for map to be ready
+    if (map.current.loaded()) {
+      addBuildingMarkers();
+    } else {
+      map.current.once("load", addMarkers);
+    }
+
+    return () => {
+      if (map.current) {
+        map.current.off("load", addMarkers);
+      }
+    };
+  }, [buildings, addBuildingMarkers]);
+
+  const showBuildingInfo = (building) => {
+    // Close any existing popup
+    if (activePopupRef.current) {
+      activePopupRef.current.remove();
+    }
+
+    // Close all marker popups
+    markersRef.current.forEach((marker) => {
+      const popup = marker.getPopup();
+      if (popup && popup.isOpen()) {
+        popup.remove();
+      }
+    });
+
+    const coords = [building.coordinates[1], building.coordinates[0]];
+    const popup = new mapboxgl.Popup({ closeButton: true, closeOnClick: false })
+      .setLngLat(coords)
+      .setHTML(
+        `
+        <div class="building-popup">
+          <h4>${building.building_name}</h4>
+          <p>${building.building_description || "No description available"}</p>
+        </div>
+      `
+      )
+      .addTo(map.current);
+
+    // Store reference to active popup
+    activePopupRef.current = popup;
+
+    // Clear reference when popup is closed
+    popup.on("close", () => {
+      activePopupRef.current = null;
+    });
+  };
+
+  const handleBuildingClick = (building, index) => {
+    if (!map.current) return;
+
+    setActive(index);
+    const coords = [building.coordinates[1], building.coordinates[0]];
+
+    // Close all open marker popups
+    markersRef.current.forEach((marker) => {
+      const popup = marker.getPopup();
+      if (popup && popup.isOpen()) {
+        popup.remove();
+      }
+    });
+
+    // Fly to building
+    map.current.flyTo({
+      center: coords,
+      zoom: 16,
+      essential: true,
+    });
+
+    // Show popup after fly animation
+    setTimeout(() => {
+      showBuildingInfo(building);
+    }, 500);
+
+    // Get route if user location exists
+    if (userLocation) {
+      getRoute(coords);
+    }
+  };
+
+  const filteredBuildings = buildings.filter((building) =>
+    building.building_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className=" container-fluid map  mt-4 mb-5">
+    <div className="container-fluid map mt-4 mb-5">
       <h3 className="h2 my-4 text-dark titles-buildings fw-bold w-100 text-center">
-        {" "}
         CST Map
       </h3>
-      <div className="row ">
-        <div className="col-2 col-md-3 bg-light buildings-box">
+
+      <div className="row">
+        <div className="col-12 col-md-3 col-lg-2 buildings-box">
           <p className="fw-bold my-3">All CST Buildings</p>
-          <ul className="list-group w-100 m-0 p-0 box">{buildingsList}</ul>
+
+          <div className="search-box mb-3">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search buildings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <ul className="list-group w-100 m-0 p-0 box">
+            {filteredBuildings.map((building, i) => {
+              const originalIndex = buildings.indexOf(building);
+              return (
+                <li
+                  key={i}
+                  className={`list-group-item ${
+                    active === originalIndex ? "active" : ""
+                  }`}
+                  onClick={() => handleBuildingClick(building, originalIndex)}
+                >
+                  {building.building_name}
+                </li>
+              );
+            })}
+          </ul>
+
+          {filteredBuildings.length === 0 && (
+            <p className="text-center text-muted mt-3">No buildings found</p>
+          )}
         </div>
-        <div className="col-10 col-md-9 map-box">
+
+        <div className="col-12 col-md-9 col-lg-10 map-box">
+          {!mapLoaded && (
+            <div className="map-loading-overlay">
+              <div className="skeleton-loader">
+                <div className="skeleton-pulse skeleton-map"></div>
+              </div>
+            </div>
+          )}
+
           <div ref={mapContainer} className="map-container" />
-          <div id="instructions" className="instructions"></div>
+
+          {showInstructions && (
+            <div className="instructions-wrapper">
+              <div id="instructions" className="instructions">
+                <button
+                  className="close-instructions"
+                  onClick={() => setShowInstructions(false)}
+                  aria-label="Close instructions"
+                >
+                  <i className="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mapLoaded && (
+            <div className="map-info-panel">
+              <div className="info-item">
+                <i className="bi bi-geo-alt-fill"></i>
+                <span>Click on map to get directions</span>
+              </div>
+              <div className="info-item">
+                <i className="bi bi-building"></i>
+                <span>{buildings.length} Buildings</span>
+              </div>
+            </div>
+          )}
         </div>
-        {/* popup a react-bootstrap modal when locationEnabled state in false */}
-        <Modal show={false} onHide={() => setLocationEnabled(false)}>
-          <Modal.Header closeButton>
-            <Modal.Title>Location</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <p>
-              You need to enable your location to get the best way to follow.
-              Enable it and refresh the page.
-            </p>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="primary" onClick={() => window.location.reload()}>
-              Enable
-            </Button>
-          </Modal.Footer>
-        </Modal>
       </div>
+
+      <Modal
+        show={showLocationModal}
+        onHide={() => setShowLocationModal(false)}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Location Access</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>
+            Enable location access to get directions and see your position on
+            the map. You can still view buildings without location access.
+          </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => setShowLocationModal(false)}
+          >
+            Close
+          </Button>
+          <Button variant="primary" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 }
