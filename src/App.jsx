@@ -5,7 +5,7 @@ import Buildings from "./Components/Buildings/Buildings";
 import Footer from "./Components/Footer/Footer";
 import AllRooms from "./Components/AllRooms/AllRooms";
 import Enquiry from "./Components/Enquiry/Enquiry";
-import Login from "./Components/Login/Login";
+import LoginForm from "./Components/Login/Login";
 import { Routes, Route } from "react-router-dom";
 import Landing from "./Components/Landing/Landing";
 import Scroll from "./Components/Scroll";
@@ -71,7 +71,7 @@ function App() {
             path="/login"
             element={
               <AuthProvider>
-                <Login />
+                <LoginForm />
               </AuthProvider>
             }
           />

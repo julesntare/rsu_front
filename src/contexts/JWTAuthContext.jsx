@@ -70,41 +70,63 @@ export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const login = async (email, password) => {
-    await fetch(`${import.meta.env.VITE_RSU_API_URL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === 200) {
-          setSession(data.token);
-          dispatch({
-            type: "LOGIN",
-            payload: {
-              isAuthenticated: true,
-              user: data.data,
-            },
-          });
-          return;
-        }
+    try {
+      const response = await fetch(`${import.meta.env.VITE_RSU_API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
+      // Success case: response is ok AND status is 200
+      if (response.ok && (data.status === 200 || response.status === 200)) {
+        setSession(data.token);
         dispatch({
           type: "LOGIN",
           payload: {
-            isAuthenticated: false,
-            user: null,
+            isAuthenticated: true,
+            user: data.data,
           },
         });
-      })
-      .catch((err) => {
-        return err;
+        return {
+          isAuthenticated: true,
+          user: data.data,
+          success: true,
+        };
+      }
+
+      // Failure case: invalid credentials or any error
+      dispatch({
+        type: "LOGOUT",
       });
-    return state;
+      return {
+        isAuthenticated: false,
+        user: null,
+        success: false,
+        message: data.message || data.error || "Invalid credentials",
+      };
+    } catch (err) {
+      dispatch({
+        type: "LOGOUT",
+      });
+      return {
+        isAuthenticated: false,
+        user: null,
+        success: false,
+        message: err.message || "An error occurred during login",
+      };
+    }
   };
 
   const logout = () => {
