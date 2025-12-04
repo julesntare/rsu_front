@@ -1,4 +1,4 @@
-import { FormControl, FormHelperText, TextField } from "@mui/material";
+import { Button, FormControl, FormHelperText, TextField } from "@mui/material";
 import React, { useState } from "react";
 import DatePicker from "react-multi-date-picker";
 import Select from "react-select";
@@ -51,6 +51,8 @@ const BasicInfo = ({
   room,
   hasParam,
   modules,
+  handleNext,
+  isTransitioning,
 }) => {
   const [tags, setTags] = useState([]);
 
@@ -79,23 +81,40 @@ const BasicInfo = ({
   return (
     <>
       {room && (
-        <label style={{ fontSize: "20px" }}>
-          Select Room:
-          <b>
-            <em> {room.room_name}</em>
-          </b>
-          <hr />
-        </label>
+        <div style={{ marginBottom: "16px" }}>
+          <label style={{
+            fontSize: "13px",
+            color: "#718096",
+            fontWeight: 500,
+            display: "block",
+            marginBottom: "6px"
+          }}>
+            Selected Room
+          </label>
+          <span style={{
+            display: "inline-block",
+            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            color: "white",
+            padding: "8px 14px",
+            borderRadius: "18px",
+            fontSize: "14px",
+            fontWeight: 600,
+            boxShadow: "0 3px 10px rgba(102, 126, 234, 0.3)",
+            letterSpacing: "0.3px"
+          }}>
+            {room.room_name}
+          </span>
+        </div>
       )}
       {hasParam && (
-        <div className="d-flex justify-content-between">
-          <div className="col-md-5">
+        <div className="d-flex justify-content-between" style={{ gap: "16px", marginBottom: "16px" }}>
+          <div className="col-md-6" style={{ paddingLeft: 0 }}>
             {/* add starting end ending date fields */}
             <FormControl
-              style={{ width: "100%", marginBottom: "20px", zIndex: 99 }}
+              style={{ width: "100%", marginBottom: "14px", zIndex: 99 }}
             >
-              <label className="mt-3">
-                <b>Event Recurrence:</b>
+              <label style={{ marginBottom: "6px", display: "block", fontWeight: "600", fontSize: "13px", color: "#2d3748" }}>
+                Event Recurrence
               </label>
               <Select
                 options={recurrence_options}
@@ -159,146 +178,523 @@ const BasicInfo = ({
                 }}
                 placeholder="Select event recurrence"
                 isSearchable
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    minHeight: '42px',
+                    borderRadius: '10px',
+                    border: state.isFocused
+                      ? '2px solid #667eea'
+                      : '2px solid #e2e8f0',
+                    padding: '2px 4px',
+                    fontSize: '14px',
+                    backgroundColor: state.isFocused ? 'white' : '#f7fafc',
+                    boxShadow: state.isFocused ? '0 0 0 3px rgba(102, 126, 234, 0.1)' : 'none',
+                    '&:hover': {
+                      backgroundColor: '#edf2f7',
+                      borderColor: '#cbd5e0',
+                    }
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isSelected ? '#667eea' : state.isFocused ? '#edf2f7' : 'white',
+                    color: state.isSelected ? 'white' : '#2d3748',
+                    padding: '10px 12px',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    borderRadius: '10px',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                    overflow: 'hidden'
+                  })
+                }}
               />
             </FormControl>
             {/* if booking.recurrence is not once, add tag input field for days of week */}
             {bookingData.recurrence &&
               bookingData.recurrence.value !== "once" && (
-                <ReactTags
-                  tags={tags}
-                  suggestions={suggestions}
-                  delimiters={delimiters}
-                  handleDelete={handleDelete}
-                  handleAddition={handleAddition}
-                  handleDrag={handleDrag}
-                  inputFieldPosition="bottom"
-                  autocomplete
-                  placeholder="Select day(s) to reserve (i.e type: Monday, Tuesday,...)"
-                />
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ marginBottom: "8px", display: "block", fontWeight: "600", fontSize: "13px", color: "#2d3748" }}>
+                    Select Days
+                  </label>
+                  <ReactTags
+                    tags={tags}
+                    suggestions={suggestions}
+                    delimiters={delimiters}
+                    handleDelete={handleDelete}
+                    handleAddition={handleAddition}
+                    handleDrag={handleDrag}
+                    inputFieldPosition="bottom"
+                    autocomplete
+                    placeholder="Type day names (e.g., Monday, Tuesday...)"
+                  />
+                </div>
               )}
-            <div className="d-flex flex-column">
-              <label>
-                <b>Expected Start Date:</b>
+
+            {/* Date fields in row */}
+            <div className="d-flex" style={{ gap: "12px", marginBottom: "14px" }}>
+              <div className="d-flex flex-column" style={{ flex: 1 }}>
+                <label style={{ marginBottom: "8px", display: "block", fontWeight: "600", fontSize: "13px", color: "#2d3748" }}>
+                  Start Date
+                </label>
+                <DatePicker
+                  mobileLabels={{
+                    date: "Date",
+                    month: "Month",
+                    year: "Year",
+                  }}
+                  value={bookingData.activityStartDate || new Date()}
+                  onChange={(e) => {
+                    setBookingData({
+                      ...bookingData,
+                      activityStartDate: e,
+                    });
+                    if (bookingData.recurrence) {
+                      switch (bookingData.recurrence.value) {
+                        case "weekly":
+                          setBookingData({
+                            ...bookingData,
+                            activityEndDate: new Date(
+                              new Date(e).setDate(new Date(e).getDate() + 7)
+                            )
+                              .toISOString()
+                              .slice(0, 10),
+                          });
+                          break;
+                        case "monthly":
+                          setBookingData({
+                            ...bookingData,
+                            activityEndDate: new Date(
+                              new Date(e).setMonth(new Date(e).getMonth() + 1)
+                            )
+                              .toISOString()
+                              .slice(0, 10),
+                          });
+                          break;
+                        default:
+                          setBookingData({
+                            ...bookingData,
+                            activityEndDate: e,
+                          });
+                          break;
+                      }
+                    }
+                  }}
+                  format="YYYY-MM-DD"
+                  minDate={new Date().toISOString().slice(0, 10)}
+                  style={{
+                    display: "block",
+                    padding: "13px 12px",
+                    width: "100%",
+                    borderRadius: "10px",
+                    border: "2px solid #e2e8f0",
+                    backgroundColor: "#f7fafc",
+                    fontSize: "14px",
+                    transition: "all 0.3s ease"
+                  }}
+                />
+              </div>
+              <div className="d-flex flex-column" style={{ flex: 1 }}>
+                <label style={{ marginBottom: "8px", display: "block", fontWeight: "600", fontSize: "13px", color: "#2d3748" }}>
+                  End Date
+                </label>
+                <DatePicker
+                  mobileLabels={{
+                    date: "Date",
+                    month: "Month",
+                    year: "Year",
+                  }}
+                  value={bookingData.activityEndDate || new Date()}
+                  onChange={(e) =>
+                    setBookingData({ ...bookingData, activityEndDate: e })
+                  }
+                  format="YYYY-MM-DD"
+                  minDate={bookingData.activityStartDate}
+                  style={{
+                    display: "block",
+                    padding: "13px 12px",
+                    width: "100%",
+                    borderRadius: "10px",
+                    border: "2px solid #e2e8f0",
+                    backgroundColor: bookingData.recurrence && bookingData.recurrence.value === "once" ? "#f0f0f0" : "#f7fafc",
+                    fontSize: "14px",
+                    transition: "all 0.3s ease",
+                    cursor: bookingData.recurrence && bookingData.recurrence.value === "once" ? "not-allowed" : "pointer"
+                  }}
+                  disabled={
+                    bookingData.recurrence &&
+                    bookingData.recurrence.value === "once"
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Activity Type */}
+            <FormControl
+              error={bookingData.error && !bookingData.activityType}
+              style={{ width: "100%", zIndex: 9, marginBottom: "14px" }}
+            >
+              <label style={{ marginBottom: "6px", display: "block", fontWeight: "600", fontSize: "13px", color: "#2d3748" }}>
+                Activity Type <span style={{ color: "#e53e3e" }}>*</span>
               </label>
-              <DatePicker
-                mobileLabels={{
-                  date: "Date",
-                  month: "Month",
-                  year: "Year",
+              <Select
+                labelId="activity-type-label"
+                id="activity-type"
+                options={options}
+                value={bookingData.activityType || ""}
+                helperText={
+                  bookingData.error && !bookingData.activityType ? "Required" : ""
+                }
+                onChange={(selectedOption) =>
+                  setBookingData({ ...bookingData, activityType: selectedOption })
+                }
+                placeholder="Select an activity type"
+                isSearchable
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    minHeight: '42px',
+                    borderRadius: '10px',
+                    border: bookingData.error && !bookingData.activityType
+                      ? '2px solid #e53e3e'
+                      : state.isFocused
+                      ? '2px solid #667eea'
+                      : '2px solid #e2e8f0',
+                    padding: '2px 4px',
+                    fontSize: '14px',
+                    backgroundColor: state.isFocused ? 'white' : '#f7fafc',
+                    boxShadow: state.isFocused ? '0 0 0 3px rgba(102, 126, 234, 0.1)' : 'none',
+                    '&:hover': {
+                      backgroundColor: '#edf2f7',
+                      borderColor: bookingData.error && !bookingData.activityType ? '#e53e3e' : '#cbd5e0',
+                    }
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isSelected ? '#667eea' : state.isFocused ? '#edf2f7' : 'white',
+                    color: state.isSelected ? 'white' : '#2d3748',
+                    padding: '10px 12px',
+                    fontSize: '14px',
+                    cursor: 'pointer',
+                    '&:active': {
+                      backgroundColor: '#667eea'
+                    }
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    borderRadius: '10px',
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                    overflow: 'hidden'
+                  })
                 }}
-                value={bookingData.activityStartDate || new Date()}
-                onChange={(e) => {
+              />
+              <FormHelperText style={{ color: '#e53e3e', marginTop: '4px', fontSize: '13px' }}>
+                {bookingData.error && !bookingData.activityType ? "Please select an activity type" : ""}
+              </FormHelperText>
+            </FormControl>
+
+            {/* Activity Description */}
+            <div style={{ marginBottom: "14px", position: 'relative' }}>
+              <TextField
+                label={
+                  <span>
+                    Activity Description <span style={{ color: "#e53e3e" }}>*</span>
+                  </span>
+                }
+                id="activity-description"
+                value={bookingData.activityDescription || ""}
+                onChange={(event) =>
                   setBookingData({
                     ...bookingData,
-                    activityStartDate: e,
-                  });
-                  if (bookingData.recurrence) {
-                    switch (bookingData.recurrence.value) {
-                      case "weekly":
-                        setBookingData({
-                          ...bookingData,
-                          activityEndDate: new Date(
-                            new Date(e).setDate(new Date(e).getDate() + 7)
-                          )
-                            .toISOString()
-                            .slice(0, 10),
-                        });
-                        break;
-                      case "monthly":
-                        setBookingData({
-                          ...bookingData,
-                          activityEndDate: new Date(
-                            new Date(e).setMonth(new Date(e).getMonth() + 1)
-                          )
-                            .toISOString()
-                            .slice(0, 10),
-                        });
-                        break;
-                      default:
-                        setBookingData({
-                          ...bookingData,
-                          activityEndDate: e,
-                        });
-                        break;
-                    }
+                    activityDescription: event.target.value,
+                  })
+                }
+                error={bookingData.error && !bookingData.activityDescription}
+                helperText={
+                  bookingData.error && !bookingData.activityDescription
+                    ? "Please provide an activity description"
+                    : "Describe the purpose and details of your booking"
+                }
+                fullWidth
+                multiline
+                rows={2}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    backgroundColor: '#f7fafc',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      backgroundColor: '#edf2f7',
+                      '& fieldset': {
+                        borderColor: '#cbd5e0',
+                      },
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor: 'white',
+                      '& fieldset': {
+                        borderColor: '#667eea',
+                        borderWidth: '2px',
+                      },
+                    },
+                    '& fieldset': {
+                      borderColor: '#e2e8f0',
+                      borderWidth: '2px',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#718096',
+                    fontWeight: 500,
+                    fontSize: '14px',
+                    '&.Mui-focused': {
+                      color: '#667eea',
+                      fontWeight: 600,
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    fontSize: '14px',
+                  },
+                }}
+              />
+            </div>
+
+            {/* Continue Button */}
+            {bookingData.step === 0 && handleNext && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  onClick={handleNext}
+                  type="button"
+                  variant="contained"
+                  color="primary"
+                  disabled={isTransitioning}
+                  startIcon={
+                    isTransitioning && (
+                      <span className="button-spinner"></span>
+                    )
                   }
-                }}
-                format="YYYY-MM-DD"
-                minDate={new Date().toISOString().slice(0, 10)}
-                style={{
-                  display: "block",
-                  padding: "15px 10px",
-                  width: "100%",
-                  marginBottom: "20px",
-                }}
-              />
-            </div>
-            <div className="d-flex flex-column">
-              <label>
-                <b>Expected End Date:</b>
-              </label>
-              <DatePicker
-                mobileLabels={{
-                  date: "Date",
-                  month: "Month",
-                  year: "Year",
-                }}
-                value={bookingData.activityEndDate || new Date()}
-                onChange={(e) =>
-                  setBookingData({ ...bookingData, activityEndDate: e })
-                }
-                format="YYYY-MM-DD"
-                minDate={bookingData.activityStartDate}
-                style={{
-                  display: "block",
-                  padding: "15px 10px",
-                  width: "100%",
-                  marginBottom: "20px",
-                }}
-                disabled={
-                  bookingData.recurrence &&
-                  bookingData.recurrence.value === "once"
-                }
-              />
-            </div>
+                  sx={{
+                    borderRadius: '10px',
+                    textTransform: 'none',
+                    padding: '10px 24px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    minHeight: '42px',
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    '&:hover': {
+                      boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)',
+                      transform: 'translateY(-1px)',
+                    }
+                  }}
+                >
+                  {isTransitioning ? "Loading..." : "Continue"}
+                </Button>
+              </div>
+            )}
           </div>
-          <div className="col-md-5">
-            <h4>Available Schedules</h4>
+          <div className="col-md-5" style={{
+            paddingRight: 0,
+            paddingLeft: "16px",
+            borderLeft: "2px solid #e2e8f0"
+          }}>
+            <h4 style={{
+              fontSize: "14px",
+              fontWeight: 600,
+              color: "#2d3748",
+              marginBottom: "10px"
+            }}>
+              Available Schedules
+            </h4>
             {/* list react-bootstrap badges of available schedules */}
             <div className="d-flex flex-wrap">
-              <i>No selections yet</i>
+              <span style={{
+                color: "#718096",
+                fontSize: "13px",
+                fontStyle: "italic"
+              }}>
+                No selections yet
+              </span>
             </div>
           </div>
         </div>
       )}
-      <FormControl
-        error={bookingData.error && !bookingData.activityType}
-        style={{ width: "100%", zIndex: 9 }}
-      >
-        <Select
-          labelId="activity-type-label"
-          id="activity-type"
-          options={options}
-          value={bookingData.activityType || ""}
-          helperText={
-            bookingData.error && !bookingData.activityType ? "Required" : ""
-          }
-          onChange={(selectedOption) =>
-            setBookingData({ ...bookingData, activityType: selectedOption })
-          }
-          placeholder="Select an activity type"
-          isSearchable
-        />
-        <FormHelperText>
-          {bookingData.error && !bookingData.activityType ? "Required" : ""}
-        </FormHelperText>
-      </FormControl>
+
+      {!hasParam && (
+        <>
+          {/* Activity Type */}
+          <FormControl
+            error={bookingData.error && !bookingData.activityType}
+            style={{ width: "100%", zIndex: 9, marginBottom: "16px" }}
+          >
+            <label style={{ marginBottom: "6px", display: "block", fontWeight: "600", fontSize: "13px", color: "#2d3748" }}>
+              Activity Type <span style={{ color: "#e53e3e" }}>*</span>
+            </label>
+            <Select
+              labelId="activity-type-label"
+              id="activity-type"
+              options={options}
+              value={bookingData.activityType || ""}
+              helperText={
+                bookingData.error && !bookingData.activityType ? "Required" : ""
+              }
+              onChange={(selectedOption) =>
+                setBookingData({ ...bookingData, activityType: selectedOption })
+              }
+              placeholder="Select an activity type"
+              isSearchable
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  minHeight: '42px',
+                  borderRadius: '10px',
+                  border: bookingData.error && !bookingData.activityType
+                    ? '2px solid #e53e3e'
+                    : state.isFocused
+                    ? '2px solid #667eea'
+                    : '2px solid #e2e8f0',
+                  padding: '2px 4px',
+                  fontSize: '14px',
+                  backgroundColor: state.isFocused ? 'white' : '#f7fafc',
+                  boxShadow: state.isFocused ? '0 0 0 3px rgba(102, 126, 234, 0.1)' : 'none',
+                  '&:hover': {
+                    backgroundColor: '#edf2f7',
+                    borderColor: bookingData.error && !bookingData.activityType ? '#e53e3e' : '#cbd5e0',
+                  }
+                }),
+                option: (base, state) => ({
+                  ...base,
+                  backgroundColor: state.isSelected ? '#667eea' : state.isFocused ? '#edf2f7' : 'white',
+                  color: state.isSelected ? 'white' : '#2d3748',
+                  padding: '10px 12px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  '&:active': {
+                    backgroundColor: '#667eea'
+                  }
+                }),
+                menu: (base) => ({
+                  ...base,
+                  borderRadius: '10px',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                  overflow: 'hidden'
+                })
+              }}
+            />
+            <FormHelperText style={{ color: '#e53e3e', marginTop: '4px', fontSize: '13px' }}>
+              {bookingData.error && !bookingData.activityType ? "Please select an activity type" : ""}
+            </FormHelperText>
+          </FormControl>
+
+          {/* Activity Description */}
+          <div style={{ marginBottom: "14px", position: 'relative' }}>
+            <TextField
+              label={
+                <span>
+                  Activity Description <span style={{ color: "#e53e3e" }}>*</span>
+                </span>
+              }
+              id="activity-description"
+              value={bookingData.activityDescription || ""}
+              onChange={(event) =>
+                setBookingData({
+                  ...bookingData,
+                  activityDescription: event.target.value,
+                })
+              }
+              error={bookingData.error && !bookingData.activityDescription}
+              helperText={
+                bookingData.error && !bookingData.activityDescription
+                  ? "Please provide an activity description"
+                  : "Describe the purpose and details of your booking"
+              }
+              fullWidth
+              multiline
+              rows={2}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  backgroundColor: '#f7fafc',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: '#edf2f7',
+                    '& fieldset': {
+                      borderColor: '#cbd5e0',
+                    },
+                  },
+                  '&.Mui-focused': {
+                    backgroundColor: 'white',
+                    '& fieldset': {
+                      borderColor: '#667eea',
+                      borderWidth: '2px',
+                    },
+                  },
+                  '& fieldset': {
+                    borderColor: '#e2e8f0',
+                    borderWidth: '2px',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#718096',
+                  fontWeight: 500,
+                  fontSize: '14px',
+                  '&.Mui-focused': {
+                    color: '#667eea',
+                    fontWeight: 600,
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  fontSize: '14px',
+                },
+              }}
+            />
+          </div>
+
+          {/* Continue Button */}
+          {bookingData.step === 0 && handleNext && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                onClick={handleNext}
+                type="button"
+                variant="contained"
+                color="primary"
+                disabled={isTransitioning}
+                startIcon={
+                  isTransitioning && (
+                    <span className="button-spinner"></span>
+                  )
+                }
+                sx={{
+                  borderRadius: '10px',
+                  textTransform: 'none',
+                  padding: '10px 24px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  minHeight: '42px',
+                  boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  '&:hover': {
+                    boxShadow: '0 6px 16px rgba(102, 126, 234, 0.4)',
+                    transform: 'translateY(-1px)',
+                  }
+                }}
+              >
+                {isTransitioning ? "Loading..." : "Continue"}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+
       {bookingData.activityType &&
         bookingData.activityType.value === "learning" && (
           <FormControl
             error={bookingData.error && !bookingData.activityModule}
-            style={{ width: "100%", marginTop: "20px" }}
+            style={{ width: "100%", marginBottom: "16px" }}
           >
+            <label style={{ marginBottom: "6px", display: "block", fontWeight: "600", fontSize: "13px", color: "#2d3748" }}>
+              Activity Module <span style={{ color: "#e53e3e" }}>*</span>
+            </label>
             <Select
               labelId="activity-module-label"
               id="activity-module"
@@ -325,11 +721,43 @@ const BasicInfo = ({
               }
               placeholder="Select an activity module"
               isSearchable
+              styles={{
+                control: (base, state) => ({
+                  ...base,
+                  minHeight: '42px',
+                  borderRadius: '10px',
+                  border: bookingData.error && !bookingData.activityModule
+                    ? '2px solid #e53e3e'
+                    : state.isFocused
+                    ? '2px solid #667eea'
+                    : '2px solid #e2e8f0',
+                  padding: '2px 4px',
+                  fontSize: '14px',
+                  backgroundColor: state.isFocused ? 'white' : '#f7fafc',
+                  boxShadow: state.isFocused ? '0 0 0 3px rgba(102, 126, 234, 0.1)' : 'none',
+                  '&:hover': {
+                    backgroundColor: '#edf2f7',
+                    borderColor: bookingData.error && !bookingData.activityModule ? '#e53e3e' : '#cbd5e0',
+                  }
+                }),
+                option: (base, state) => ({
+                  ...base,
+                  backgroundColor: state.isSelected ? '#667eea' : state.isFocused ? '#edf2f7' : 'white',
+                  color: state.isSelected ? 'white' : '#2d3748',
+                  padding: '10px 12px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                }),
+                menu: (base) => ({
+                  ...base,
+                  borderRadius: '10px',
+                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                  overflow: 'hidden'
+                })
+              }}
             />
-            <FormHelperText>
-              {bookingData.error && !bookingData.activityModule
-                ? "Required"
-                : ""}
+            <FormHelperText style={{ color: '#e53e3e', marginTop: '4px', fontSize: '13px' }}>
+              {bookingData.error && !bookingData.activityModule ? "Please select a module" : ""}
             </FormHelperText>
           </FormControl>
         )}
@@ -349,30 +777,46 @@ const BasicInfo = ({
             helperText={
               bookingData.error && !bookingData.activityName ? "Required" : ""
             }
-            style={{ width: "100%", marginTop: "20px" }}
+            fullWidth
+            sx={{
+              marginBottom: "16px",
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                backgroundColor: '#f7fafc',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: '#edf2f7',
+                  '& fieldset': {
+                    borderColor: '#cbd5e0',
+                  },
+                },
+                '&.Mui-focused': {
+                  backgroundColor: 'white',
+                  '& fieldset': {
+                    borderColor: '#667eea',
+                    borderWidth: '2px',
+                  },
+                },
+                '& fieldset': {
+                  borderColor: '#e2e8f0',
+                  borderWidth: '2px',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: '#718096',
+                fontWeight: 500,
+                fontSize: '14px',
+                '&.Mui-focused': {
+                  color: '#667eea',
+                  fontWeight: 600,
+                },
+              },
+              '& .MuiInputBase-input': {
+                fontSize: '14px',
+              },
+            }}
           />
         )}
-      <TextField
-        label="Activity Description"
-        id="activity-description"
-        value={bookingData.activityDescription || ""}
-        onChange={(event) =>
-          setBookingData({
-            ...bookingData,
-            activityDescription: event.target.value,
-          })
-        }
-        error={bookingData.error && !bookingData.activityDescription}
-        helperText={
-          bookingData.error && !bookingData.activityDescription
-            ? "Required"
-            : ""
-        }
-        margin="normal"
-        fullWidth
-        multiline
-        rows={3}
-      />
     </>
   );
 };

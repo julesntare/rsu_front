@@ -16,6 +16,8 @@ const BookingsForm = (props) => {
     isLastStep: false,
   });
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const rooms = useSelector((state) => state.rooms.rooms);
   const modules = useSelector((state) => state.modules.modules);
   const { hasParam } = props;
@@ -35,7 +37,11 @@ const BookingsForm = (props) => {
 
   // go to previous step
   const handlePrevious = () => {
-    setBookingData({ ...bookingData, step: bookingData.step - 1 });
+    setIsTransitioning(true);
+    setTimeout(() => {
+      setBookingData({ ...bookingData, step: bookingData.step - 1 });
+      setIsTransitioning(false);
+    }, 300);
   };
 
   // go to next step
@@ -50,33 +56,47 @@ const BookingsForm = (props) => {
         setBookingData({ ...bookingData, error: true });
         return;
       }
-      setBookingData({
-        ...bookingData,
-        error: false,
-        step: bookingData.step + 1,
-      });
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setBookingData({
+          ...bookingData,
+          error: false,
+          step: bookingData.step + 1,
+        });
+        setIsTransitioning(false);
+      }, 300);
     }
     if (bookingData.step === 1) {
       if (!bookingData.roomCategory || !bookingData.activityParticipants) {
         setBookingData({ ...bookingData, error: true });
         return;
       }
-      setBookingData({
-        ...bookingData,
-        error: false,
-        step: bookingData.step + 1,
-      });
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setBookingData({
+          ...bookingData,
+          error: false,
+          step: bookingData.step + 1,
+        });
+        setIsTransitioning(false);
+      }, 300);
     }
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    setBookingData({
-      ...bookingData,
-      activityType: bookingData.activityType.value,
-      activityName: bookingData.activityName,
-      activityDescription: bookingData.activityDescription,
-    });
+    setIsLoading(true);
+
+    // Simulate API call
+    setTimeout(() => {
+      setBookingData({
+        ...bookingData,
+        activityType: bookingData.activityType.value,
+        activityName: bookingData.activityName,
+        activityDescription: bookingData.activityDescription,
+      });
+      setIsLoading(false);
+    }, 1500);
   };
 
   // handle switch case for component to load on each step
@@ -90,6 +110,8 @@ const BookingsForm = (props) => {
             room={selectedRoom}
             hasParam={hasParam}
             modules={modules}
+            handleNext={handleNext}
+            isTransitioning={isTransitioning}
           />
         );
       case 1:
@@ -119,61 +141,121 @@ const BookingsForm = (props) => {
     }
   };
 
+  // Step labels for progress indicator
+  const stepLabels = ["Basic Information", "Requirements", "Schedule Details"];
+
   return (
-    <div className="col-12 col-md-12">
-      <div className="form-box p-4">
-        <h4 className="form-title fw-bold text-center">
-          {" "}
-          Fill out the Below Information
-        </h4>
-        <div style={{ margin: "50px 0" }}>
-          {SteppedComponent(bookingData.step)}
-          <div style={{ marginTop: "30px" }}>
-            {bookingData.step === 0 ? (
-              <Button
-                onClick={handleNext}
-                type="button"
-                style={{ float: "right" }}
-                variant="contained"
-                color="primary"
-              >
-                Continue
-              </Button>
-            ) : (
-              <>
-                {bookingData.isLastStep ? (
-                  <Button
-                    onClick={handleSubmit}
-                    type="button"
-                    style={{ float: "right" }}
-                    variant="contained"
-                    color="primary"
-                  >
-                    Finish
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleNext}
-                    type="button"
-                    style={{ float: "right" }}
-                    variant="contained"
-                    color="primary"
-                  >
-                    Continue
-                  </Button>
-                )}
-                <Button
-                  onClick={handlePrevious}
-                  type="button"
-                  style={{ float: "right", marginRight: "10px" }}
-                  variant="contained"
-                  color="secondary"
+    <div className="col-12 col-md-12" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div className="form-box p-3" style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100vh' }}>
+        {/* Compact Header Section */}
+        <div style={{ marginBottom: '12px', flexShrink: 0 }}>
+          <h4 className="form-title fw-bold text-center" style={{ fontSize: '18px', marginBottom: '12px' }}>
+            Fill out the Below Information
+          </h4>
+
+          {/* Compact Progress Indicator */}
+          <div style={{ marginBottom: '12px' }}>
+            <div className="booking-progress-steps">
+              {stepLabels.map((label, index) => (
+                <div
+                  key={index}
+                  className={`booking-progress-step ${
+                    index === bookingData.step
+                      ? "active"
+                      : index < bookingData.step
+                      ? "completed"
+                      : ""
+                  }`}
                 >
-                  Previous
-                </Button>
-              </>
-            )}
+                  <div className="step-circle">
+                    {index < bookingData.step ? (
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M13.5 4L6 11.5L2.5 8"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    ) : (
+                      <span>{index + 1}</span>
+                    )}
+                  </div>
+                  <span className="step-label">{label}</span>
+                  {index < stepLabels.length - 1 && (
+                    <div className="step-connector"></div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
+        </div>
+
+        {/* Scrollable Content Area */}
+        <div style={{ flex: 1, overflow: 'auto', marginBottom: '12px', paddingRight: '4px' }}>
+          <div
+            className={`booking-step-content ${
+              isTransitioning ? "transitioning" : ""
+            }`}
+          >
+            {SteppedComponent(bookingData.step)}
+          </div>
+        </div>
+
+        {/* Footer with Navigation Buttons */}
+        <div style={{ paddingTop: '12px', borderTop: '1px solid #e2e8f0', flexShrink: 0 }}>
+          {bookingData.step === 0 ? null : (
+            <>
+              {bookingData.isLastStep ? (
+                <Button
+                  onClick={handleSubmit}
+                  type="button"
+                  style={{ float: "right" }}
+                  variant="contained"
+                  color="primary"
+                  disabled={isLoading}
+                  startIcon={
+                    isLoading && <span className="button-spinner"></span>
+                  }
+                >
+                  {isLoading ? "Submitting..." : "Finish"}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleNext}
+                  type="button"
+                  style={{ float: "right" }}
+                  variant="contained"
+                  color="primary"
+                  disabled={isTransitioning}
+                  startIcon={
+                    isTransitioning && (
+                      <span className="button-spinner"></span>
+                    )
+                  }
+                >
+                  {isTransitioning ? "Loading..." : "Continue"}
+                </Button>
+              )}
+              <Button
+                onClick={handlePrevious}
+                type="button"
+                style={{ float: "right", marginRight: "10px" }}
+                variant="contained"
+                color="secondary"
+                disabled={isTransitioning || isLoading}
+              >
+                Previous
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

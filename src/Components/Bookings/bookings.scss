@@ -71,11 +71,77 @@
   }
   //right side form
   .form-box {
-    border: 1px solid transparent;
-    border-radius: 2rem;
-    transition: all 0.5s ease-in;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    max-height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding: 16px !important;
+
+    // Decorative gradient circles
+    &::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -30px;
+      left: -30px;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(118, 75, 162, 0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+      animation: float 8s ease-in-out infinite reverse;
+    }
+
     &:hover {
-      border: 1px solid $bg-hover-secondary;
+      border: 1px solid #667eea;
+      box-shadow: 0 8px 30px rgba(102, 126, 234, 0.15);
+      transform: translateY(-2px);
+    }
+
+    // Custom scrollbar
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+
+      &:hover {
+        background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+      }
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0) translateX(0);
+    }
+    50% {
+      transform: translateY(-20px) translateX(10px);
     }
   }
   .form-group {
@@ -129,7 +195,24 @@
     }
   }
   .form-title {
-    color: $color-primary;
+    color: #1a202c;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+    position: relative;
+    display: inline-block;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 40px;
+      height: 3px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 2px;
+    }
   }
   .btn-booking {
     background: $color-primary;
@@ -560,6 +643,296 @@
         padding: 0.4rem 0.8rem;
         font-size: 0.85rem;
       }
+    }
+  }
+}
+
+// Booking Progress Indicator Styles - Compact Version
+.booking-progress-container {
+  margin: 8px 0;
+  padding: 0 8px;
+}
+
+.booking-progress-steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.booking-progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+
+  .step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    border: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: #a0aec0;
+    transition: all 0.3s ease;
+    z-index: 2;
+    position: relative;
+    margin-bottom: 6px;
+  }
+
+  .step-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #718096;
+    text-align: center;
+    max-width: 110px;
+    line-height: 1.2;
+    transition: color 0.3s ease;
+  }
+
+  .step-connector {
+    position: absolute;
+    top: 16px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #e2e8f0;
+    z-index: 1;
+    transition: background 0.3s ease;
+  }
+
+  &.active {
+    .step-circle {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-color: #667eea;
+      color: white;
+      box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .step-label {
+      color: #667eea;
+      font-weight: 700;
+    }
+  }
+
+  &.completed {
+    .step-circle {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-color: #667eea;
+      color: white;
+    }
+
+    .step-label {
+      color: #2d3748;
+    }
+
+    .step-connector {
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 3px 10px rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    box-shadow: 0 3px 16px rgba(102, 126, 234, 0.6);
+  }
+}
+
+// Enhanced button styles for booking form
+.MuiButton-root {
+  border-radius: 10px !important;
+  padding: 10px 24px !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  font-size: 14px !important;
+  transition: all 0.3s ease !important;
+  min-height: 42px !important;
+
+  &.MuiButton-containedPrimary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4) !important;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5) !important;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      transform: none !important;
+    }
+  }
+
+  &.MuiButton-containedSecondary {
+    background: #718096 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+
+    &:hover {
+      background: #4a5568 !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      transform: none !important;
+    }
+  }
+}
+
+// Step content transitions
+.booking-step-content {
+  animation: fadeSlideIn 0.4s ease-out;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+
+  &.transitioning {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+// Button spinner
+.button-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Date picker enhancements
+.rmdp-container {
+  .rmdp-wrapper {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+  }
+
+  .rmdp-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+
+  .rmdp-day {
+    &.rmdp-selected {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    }
+
+    &.rmdp-today {
+      background-color: rgba(102, 126, 234, 0.1);
+
+      span {
+        color: #667eea;
+        font-weight: 700;
+      }
+    }
+
+    &:hover:not(.rmdp-disabled) {
+      background-color: #edf2f7;
+    }
+  }
+
+  .rmdp-arrow-container {
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+    }
+  }
+}
+
+// Enhanced date field styling
+input[type="date"] {
+  padding: 14px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #f7fafc;
+  font-size: 15px;
+  color: #2d3748;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: 100%;
+
+  &:hover {
+    background-color: #edf2f7;
+    border-color: #cbd5e0;
+  }
+
+  &:focus {
+    background-color: white;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    outline: none;
+  }
+}
+
+// Responsive progress indicator
+@media (max-width: 768px) {
+  .booking-progress-steps {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .booking-progress-step {
+    flex-direction: row;
+    justify-content: flex-start;
+    margin-bottom: 24px;
+
+    .step-circle {
+      margin-right: 16px;
+      margin-bottom: 0;
+      width: 40px;
+      height: 40px;
+      font-size: 16px;
+    }
+
+    .step-label {
+      text-align: left;
+      flex: 1;
+      max-width: none;
+      align-self: center;
+    }
+
+    .step-connector {
+      display: none;
     }
   }
 }
