@@ -27,7 +27,7 @@ const KeyCodes = {
   enter: 13,
 };
 
-const delimiters = [KeyCodes.comma, KeyCodes.enter];
+const separators = [KeyCodes.comma, KeyCodes.enter];
 
 const options = [
   { value: "learning", label: "Learning" },
@@ -251,7 +251,7 @@ const BasicInfo = ({
                   <ReactTags
                     tags={tags}
                     suggestions={suggestions}
-                    delimiters={delimiters}
+                    separators={separators}
                     handleDelete={handleDelete}
                     handleAddition={handleAddition}
                     handleDrag={handleDrag}
