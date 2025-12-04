@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
-import './cal.scss';
+import "./cal.scss";
 
-const CLIENT_ID = process.env.REACT_APP_CLIENT_ID;
-const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY;
+const CLIENT_ID = import.meta.env.VITE_CALENDAR_CLIENT_ID;
+const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
 // Authorization scopes required by the API; multiple scopes can be
 // included, separated by spaces.
@@ -129,8 +129,6 @@ const CalComp = () => {
 
   const addEvent = () => {
     if (window.gapi.client || localStorage.getItem("access_token")) {
-      let today = new Date();
-
       fetch(
         `https://www.googleapis.com/calendar/v3/calendars/primary/events?key=${API_KEY}&timeMax=${new Date(
           "Apr 14, 2021"

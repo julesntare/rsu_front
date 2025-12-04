@@ -7,8 +7,6 @@ import {
   DirectionsRenderer,
 } from "@react-google-maps/api";
 import BuildingsList from "../../assets/APIs/BuildingsList.json";
-import markerCurrentIcon from "../../assets/img/marker-current.png";
-import markerRegionIcon from "../../assets/img/marker-region.png";
 import RingLoader from "react-spinners/RingLoader";
 
 export default function Map() {
@@ -40,7 +38,7 @@ export default function Map() {
   useEffect(() => {
     const getDirections = async () => {
       const response = await fetch(
-        `https://maps.googleapis.com/maps/api/directions/json?origin=${geoLocation.latitude},${geoLocation.longitude}&destination=-1.957935,30.064344&key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}`
+        `https://maps.googleapis.com/maps/api/directions/json?origin=${geoLocation.latitude},${geoLocation.longitude}&destination=-1.957935,30.064344&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
       );
       const data = await response.json();
       if (data.status === "OK") {
@@ -81,7 +79,7 @@ export default function Map() {
   ));
   //load map
   const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
   //when not loaded!
   if (!isLoaded) {

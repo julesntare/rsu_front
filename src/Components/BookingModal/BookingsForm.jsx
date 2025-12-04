@@ -10,30 +10,32 @@ import BasicRequirements from "./BookingSteps/BasicRequirements";
 import SchedulesDetails from "./BookingSteps/SchedulesDetails/SchedulesDetails";
 
 const BookingsForm = (props) => {
-  const [bookingData, setBookingData] = useState({
-    step: 0,
-    error: false,
-    isLastStep: false,
-  });
-  const [selectedRoom, setSelectedRoom] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const rooms = useSelector((state) => state.rooms.rooms);
-  const modules = useSelector((state) => state.modules.modules);
   const { hasParam } = props;
   const param = useParams();
   const dispatch = useDispatch();
+  const rooms = useSelector((state) => state.rooms.rooms);
+  const modules = useSelector((state) => state.modules.modules);
+
+  // Initialize bookingData with room from param if available
+  const [bookingData, setBookingData] = useState(() => ({
+    step: 0,
+    error: false,
+    isLastStep: false,
+    ...(hasParam && param.id ? { room: param.id } : {}),
+  }));
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Derive selectedRoom from rooms array based on param
+  const selectedRoom =
+    hasParam && param.id ? rooms.find((room) => room._id === param.id) : null;
 
   useEffect(() => {
-    if (hasParam) {
-      setBookingData({ ...bookingData, room: param.id });
-      dispatch(getRoom());
-      // filter by param.id
-      const room = rooms.find((room) => room._id === param.id);
-      setSelectedRoom(room);
-    }
     dispatch(getModule());
-  }, [dispatch]);
+    if (hasParam) {
+      dispatch(getRoom());
+    }
+  }, [dispatch, hasParam]);
 
   // go to previous step
   const handlePrevious = () => {
@@ -48,11 +50,16 @@ const BookingsForm = (props) => {
   const handleNext = () => {
     console.log(bookingData);
     if (bookingData.step === 0) {
-      if (
-        !bookingData.activityType ||
-        !bookingData.activityName ||
-        !bookingData.activityDescription
-      ) {
+      // Validate required fields based on activity type
+      const isLearningType = bookingData.activityType?.value === "learning";
+      const hasRequiredFields =
+        bookingData.activityType &&
+        bookingData.activityDescription &&
+        (isLearningType
+          ? bookingData.activityModule
+          : bookingData.activityName);
+
+      if (!hasRequiredFields) {
         setBookingData({ ...bookingData, error: true });
         return;
       }
@@ -145,16 +152,35 @@ const BookingsForm = (props) => {
   const stepLabels = ["Basic Information", "Requirements", "Schedule Details"];
 
   return (
-    <div className="col-12 col-md-12" style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <div className="form-box p-3" style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100vh' }}>
+    <div
+      className="col-12 col-md-12"
+      style={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        className="form-box p-3"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          maxHeight: "100vh",
+        }}
+      >
         {/* Compact Header Section */}
-        <div style={{ marginBottom: '12px', flexShrink: 0 }}>
-          <h4 className="form-title fw-bold text-center" style={{ fontSize: '18px', marginBottom: '12px' }}>
+        <div style={{ marginBottom: "12px", flexShrink: 0 }}>
+          <h4
+            className="form-title fw-bold text-center"
+            style={{ fontSize: "18px", marginBottom: "12px" }}
+          >
             Fill out the Below Information
           </h4>
 
           {/* Compact Progress Indicator */}
-          <div style={{ marginBottom: '12px' }}>
+          <div style={{ marginBottom: "12px" }}>
             <div className="booking-progress-steps">
               {stepLabels.map((label, index) => (
                 <div
@@ -199,7 +225,14 @@ const BookingsForm = (props) => {
         </div>
 
         {/* Scrollable Content Area */}
-        <div style={{ flex: 1, overflow: 'auto', marginBottom: '12px', paddingRight: '4px' }}>
+        <div
+          style={{
+            flex: 1,
+            overflow: "auto",
+            marginBottom: "12px",
+            paddingRight: "4px",
+          }}
+        >
           <div
             className={`booking-step-content ${
               isTransitioning ? "transitioning" : ""
@@ -210,7 +243,13 @@ const BookingsForm = (props) => {
         </div>
 
         {/* Footer with Navigation Buttons */}
-        <div style={{ paddingTop: '12px', borderTop: '1px solid #e2e8f0', flexShrink: 0 }}>
+        <div
+          style={{
+            paddingTop: "12px",
+            borderTop: "1px solid #e2e8f0",
+            flexShrink: 0,
+          }}
+        >
           {bookingData.step === 0 ? null : (
             <>
               {bookingData.isLastStep ? (
@@ -236,9 +275,7 @@ const BookingsForm = (props) => {
                   color="primary"
                   disabled={isTransitioning}
                   startIcon={
-                    isTransitioning && (
-                      <span className="button-spinner"></span>
-                    )
+                    isTransitioning && <span className="button-spinner"></span>
                   }
                 >
                   {isTransitioning ? "Loading..." : "Continue"}
