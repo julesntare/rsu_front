@@ -1,14 +1,8 @@
-import { FormControl, TextField } from "@mui/material";
+import { Button, TextField } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import Select from "react-select";
 
-const options = [
-  { value: "classroom", label: "Classroom" },
-  { value: "laboratory", label: "Laboratory" },
-  { value: "hall", label: "Hall" },
-];
-
-const BasicRequirements = ({ bookingData, setBookingData, room }) => {
+const BasicRequirements = ({ bookingData, setBookingData, handleNext, handlePrevious, isTransitioning }) => {
   const [roomTypes, setRoomTypes] = useState([]);
 
   useEffect(() => {
@@ -20,6 +14,9 @@ const BasicRequirements = ({ bookingData, setBookingData, room }) => {
       .then((res) => res.json())
       .then((data) => {
         setRoomTypes(data);
+      })
+      .catch((error) => {
+        console.error("Error fetching room types:", error);
       });
   }, []);
 
@@ -112,69 +109,103 @@ const BasicRequirements = ({ bookingData, setBookingData, room }) => {
         )}
       </div>
 
-      <TextField
-        type="number"
-        label={
-          <span>
-            Estimated Participants <span style={{ color: "#e53e3e" }}>*</span>
-          </span>
-        }
-        id="activity-participants"
-        value={bookingData.activityParticipants || ""}
-        onChange={(event) =>
-          setBookingData({
-            ...bookingData,
-            activityParticipants: event.target.value,
-          })
-        }
-        error={bookingData.error && !bookingData.activityParticipants}
-        helperText={
-          bookingData.error && !bookingData.activityParticipants
-            ? "Please enter the number of participants"
-            : "Enter the expected number of people attending"
-        }
-        fullWidth
-        size="small"
-        margin="dense"
-        inputProps={{ min: 1 }}
-        sx={{
-          "& .MuiOutlinedInput-root": {
-            borderRadius: "10px",
-            backgroundColor: "#f7fafc",
-            transition: "all 0.3s ease",
-            fontSize: "14px",
-            "&:hover": {
-              backgroundColor: "#edf2f7",
-              "& fieldset": {
-                borderColor: "#cbd5e0",
+      <div style={{ marginBottom: "16px" }}>
+        <label
+          style={{
+            marginBottom: "6px",
+            display: "block",
+            fontWeight: "600",
+            fontSize: "13px",
+            color: "#2d3748",
+          }}
+        >
+          Estimated Participants <span style={{ color: "#e53e3e" }}>*</span>
+        </label>
+        <TextField
+          type="number"
+          id="activity-participants"
+          value={bookingData.activityParticipants || ""}
+          onChange={(event) =>
+            setBookingData({
+              ...bookingData,
+              activityParticipants: event.target.value,
+            })
+          }
+          error={bookingData.error && !bookingData.activityParticipants}
+          placeholder="Enter the expected number of people attending"
+          fullWidth
+          inputProps={{ min: 1 }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              minHeight: "42px",
+              borderRadius: "10px",
+              backgroundColor: "#f7fafc",
+              transition: "all 0.3s ease",
+              fontSize: "14px",
+              padding: "2px 4px",
+              "&:hover": {
+                backgroundColor: "#edf2f7",
+                "& fieldset": {
+                  borderColor: "#cbd5e0",
+                },
               },
-            },
-            "&.Mui-focused": {
-              backgroundColor: "white",
+              "&.Mui-focused": {
+                backgroundColor: "white",
+                boxShadow: "0 0 0 3px rgba(102, 126, 234, 0.1)",
+                "& fieldset": {
+                  borderColor: "#667eea",
+                  borderWidth: "2px",
+                },
+              },
               "& fieldset": {
-                borderColor: "#667eea",
+                borderColor: bookingData.error && !bookingData.activityParticipants ? "#e53e3e" : "#e2e8f0",
                 borderWidth: "2px",
               },
             },
-            "& fieldset": {
-              borderColor: "#e2e8f0",
-              borderWidth: "2px",
+            "& .MuiInputBase-input": {
+              fontSize: "14px",
+              padding: "8px 12px",
             },
-          },
-          "& .MuiInputLabel-root": {
-            color: "#718096",
-            fontWeight: 500,
-            fontSize: "14px",
-            "&.Mui-focused": {
-              color: "#667eea",
-              fontWeight: 600,
-            },
-          },
-          "& .MuiInputBase-input": {
-            fontSize: "14px",
-          },
-        }}
-      />
+          }}
+        />
+        {bookingData.error && !bookingData.activityParticipants && (
+          <p
+            style={{
+              color: "#e53e3e",
+              marginTop: "4px",
+              fontSize: "13px",
+              marginBottom: 0,
+            }}
+          >
+            Please enter the number of participants
+          </p>
+        )}
+      </div>
+
+      {/* Navigation Buttons */}
+      <div style={{ marginTop: "16px", display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+        <Button
+          onClick={handlePrevious}
+          type="button"
+          variant="contained"
+          color="secondary"
+          disabled={isTransitioning}
+        >
+          Previous
+        </Button>
+        <Button
+          onClick={handleNext}
+          type="button"
+          variant="contained"
+          color="primary"
+          disabled={isTransitioning}
+          startIcon={
+            isTransitioning && <span className="button-spinner"></span>
+          }
+        >
+          {isTransitioning ? "Loading..." : "Continue"}
+        </Button>
+      </div>
     </>
   );
 };

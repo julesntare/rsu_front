@@ -3,8 +3,6 @@ import "./BuildingGoogleMap.scss";
 import { useJsApiLoader, GoogleMap, Marker } from "@react-google-maps/api";
 
 export default function BuildingGoogleMap({ latLong, showMaps }) {
-  console.log(latLong);
-  console.log(showMaps);
   //coordinates
   let lat = latLong.lat;
   let long = latLong.long;

@@ -31,10 +31,7 @@ const CalComp = () => {
     window.gapi.auth2.authorize(
       { client_id: CLIENT_ID, scope: SCOPES },
       (res) => {
-        console.log(res);
         if (res) {
-          console.log(window.gapi.client, res);
-
           if (res.access_token)
             localStorage.setItem("access_token", res.access_token);
 
@@ -86,7 +83,6 @@ const CalComp = () => {
         })
         .then((data) => {
           if (data?.items) {
-            console.log(data);
             setEvents(formatEvents(data.items));
           }
         });
@@ -110,8 +106,6 @@ const CalComp = () => {
       })
       .then(function (response) {
         var events = response.result.items;
-
-        console.log(events);
 
         if (events.length > 0) {
           setEvents(formatEvents(events));

@@ -9,13 +9,14 @@ const Enquiry = () => {
   const [verifySent, setVerifySent] = useState(false);
   const handleEnquirySubmit = (e) => {
     e.preventDefault();
+
     const dataMessage = {
       name: namesRef.current.value,
       email: emailRef.current.value,
       phone: phoneRef.current.value,
       comment: commentRef.current.value,
     };
-    console.log(dataMessage);
+
     if (dataMessage) {
       setVerifySent(true);
       setTimeout(() => setVerifySent(false), 2000);
