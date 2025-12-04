@@ -39,18 +39,27 @@ const LoginForm = () => {
       setIsProcessing(false);
 
       if (res.success && res.isAuthenticated) {
-        Swal.fire({
-          icon: "success",
-          title: "Welcome Back!",
-          text: "You have successfully logged in",
-          confirmButtonColor: "#667eea",
-          timer: 2000,
-          showConfirmButton: false,
-        });
+        // Dispatch custom event to notify components of login
+        window.dispatchEvent(new Event("rsu-login-success"));
 
+        // Navigate immediately for smooth experience
         const redirectPath = localStorage.getItem("rsu_redirect") || "/";
         localStorage.removeItem("rsu_redirect");
         navigate(redirectPath);
+
+        // Show success toast after navigation (non-blocking)
+        setTimeout(() => {
+          Swal.fire({
+            icon: "success",
+            title: "Welcome Back!",
+            text: "You have successfully logged in",
+            confirmButtonColor: "#667eea",
+            timer: 1500,
+            showConfirmButton: false,
+            toast: true,
+            position: "top-end",
+          });
+        }, 100);
       } else {
         Swal.fire({
           icon: "error",

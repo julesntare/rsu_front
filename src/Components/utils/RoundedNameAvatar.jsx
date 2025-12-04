@@ -1,10 +1,11 @@
 import React from "react";
 import { Dropdown, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import useAuth from "../../hooks/useAuth";
 import "../Navbar/Navbar.scss";
 
 const getInitials = (name) => {
-  const initials = name.split(" ").map((word) => word[0]);
+  const initials = name.split(" ").map((word) => word[0].toUpperCase());
   return initials.join("");
 };
 
@@ -24,9 +25,10 @@ const RoundedNameAvatar = ({ name }) => {
   const initials = getInitials(name);
   const avatarColor = getAvatarColor(initials);
   const navigate = useNavigate();
+  const { logout: authLogout } = useAuth();
 
-  const logout = () => {
-    localStorage.removeItem("rsuToken");
+  const handleLogout = () => {
+    authLogout();
     navigate("/login");
   };
 
@@ -52,7 +54,7 @@ const RoundedNameAvatar = ({ name }) => {
       <Dropdown.Menu>
         <Dropdown.Item href="#/action-1">Dashboard</Dropdown.Item>
         <Dropdown.Item href="#/action-2">Profile</Dropdown.Item>
-        <Dropdown.Item onClick={logout}>Logout</Dropdown.Item>
+        <Dropdown.Item onClick={handleLogout}>Logout</Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
   );

@@ -9,15 +9,54 @@ import useAuth from "../../hooks/useAuth";
 
 export default function NavBar() {
   const { user, isAuthenticated } = useAuth();
-  const [loggedIn, setLoggedIn] = useState(true); // check if the user has logged in
   const [hideFilter, setHideFilter] = useState(true);
+  // Check localStorage for immediate feedback during auth state transition
+  const [hasToken, setHasToken] = useState(!!localStorage.getItem("rsuToken"));
+  const [tempUserData, setTempUserData] = useState(null);
+
   const handleHideFilter = () => {
     setHideFilter(false);
   };
 
+  // Monitor localStorage changes for immediate UI updates
   useEffect(() => {
-    setLoggedIn(isAuthenticated);
-  }, [user, isAuthenticated]);
+    const checkAuth = () => {
+      const token = localStorage.getItem("rsuToken");
+      setHasToken(!!token);
+
+      // Get user data from localStorage for immediate display
+      if (token && !user) {
+        try {
+          const storedUser = localStorage.getItem("rsuUser");
+          if (storedUser) {
+            setTempUserData(JSON.parse(storedUser));
+          }
+        } catch (err) {
+          console.error("Failed to parse user data:", err);
+          setTempUserData(null);
+        }
+      } else if (user) {
+        // Clear temp data when real user data is available
+        setTempUserData(null);
+      }
+    };
+
+    // Check on mount and when isAuthenticated changes
+    checkAuth();
+
+    // Listen for login success event for immediate update
+    const handleLoginSuccess = () => {
+      checkAuth();
+    };
+
+    window.addEventListener("rsu-login-success", handleLoginSuccess);
+    window.addEventListener("storage", checkAuth);
+
+    return () => {
+      window.removeEventListener("rsu-login-success", handleLoginSuccess);
+      window.removeEventListener("storage", checkAuth);
+    };
+  }, [isAuthenticated, user]);
 
   //get rid of filters in some nav links
   let locationPath = window.location.pathname;
@@ -78,12 +117,18 @@ export default function NavBar() {
               </ActiveLink>
             </li>
             <li className="nav-item  ms-lg-5">
-              {!loggedIn ? (
+              {!isAuthenticated && !hasToken ? (
                 <button className=" text-white btn-login">
                   <ActiveLink to="/login">Login</ActiveLink>
                 </button>
               ) : (
-                <RoundedNameAvatar name={user ? user.fullname : "N A"} />
+                <RoundedNameAvatar
+                  name={
+                    user?.fullname ||
+                    tempUserData?.fullname ||
+                    "N A"
+                  }
+                />
               )}
             </li>
           </Nav>

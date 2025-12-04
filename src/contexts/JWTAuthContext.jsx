@@ -92,6 +92,8 @@ export const AuthProvider = ({ children }) => {
       // Success case: response is ok AND status is 200
       if (response.ok && (data.status === 200 || response.status === 200)) {
         setSession(data.token);
+        // Store user data temporarily for immediate access
+        localStorage.setItem("rsuUser", JSON.stringify(data.data));
         dispatch({
           type: "LOGIN",
           payload: {
@@ -131,6 +133,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setSession(null);
+    localStorage.removeItem("rsuUser");
     dispatch({ type: "LOGOUT" });
   };
 
@@ -149,6 +152,7 @@ export const AuthProvider = ({ children }) => {
         })
           .then((res) => res.json())
           .then((data) => {
+            localStorage.setItem("rsuUser", JSON.stringify(data));
             dispatch({
               type: "INIT",
               payload: {
@@ -159,6 +163,7 @@ export const AuthProvider = ({ children }) => {
           })
           .catch((err) => {
             console.log(err);
+            localStorage.removeItem("rsuUser");
           });
       } else {
         dispatch({
