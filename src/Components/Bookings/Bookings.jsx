@@ -203,7 +203,7 @@ const Bookings = () => {
               {isAuthenticated && (
                 <button
                   className="btn btn-primary mb-3"
-                  onClick={(e) => navigate("/bookingform")}
+                  onClick={() => navigate("/bookingform")}
                 >
                   New Schedule
                 </button>
@@ -246,7 +246,7 @@ const Bookings = () => {
                   minute: "2-digit",
                   meridiem: false,
                 }}
-                dayHeaderFormat={{ weekday: 'short' }}
+                dayHeaderFormat={{ weekday: "short" }}
                 loading={(isLoading) => {
                   // Force re-render when loading completes
                   if (!isLoading && calendarRef.current) {
