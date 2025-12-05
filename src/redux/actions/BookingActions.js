@@ -8,7 +8,7 @@ export const MODIFY_BOOKING = "MODIFY_BOOKING";
 export const DELETE_ALL_BOOKING = "DELETE_ALL_BOOKING";
 
 export const getBooking = () => (dispatch) => {
-  fetch(`${import.meta.env.VITE_RSU_API_URL}/bookings/all`)
+  fetch(`${import.meta.env.VITE_RSU_API_URL}/bookings/any`)
     .then((res) => res.json())
     .then((data) => {
       dispatch({
